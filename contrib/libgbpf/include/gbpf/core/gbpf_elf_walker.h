@@ -35,4 +35,4 @@ struct gbpf_elf_walker {
 	void *data;
 };
 
-int gbpf_walk_elf(GBPFElfWalker *walker, GBPFDriver *driver, char *fname);
+int gbpf_walk_elf(GBPFElfWalker *walker, GBPFDriver *driver, const char *fname);

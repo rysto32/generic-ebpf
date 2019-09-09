@@ -217,7 +217,7 @@ find_prog_sym(struct elf_refs *refs)
 }
 
 int
-gbpf_walk_elf(GBPFElfWalker *walker, GBPFDriver *driver, char *fname)
+gbpf_walk_elf(GBPFElfWalker *walker, GBPFDriver *driver, const char *fname)
 {
 	int error;
 	struct elf_refs refs;
