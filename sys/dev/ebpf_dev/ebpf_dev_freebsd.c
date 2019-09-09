@@ -21,6 +21,8 @@
 #include <sys/ebpf.h>
 #include <sys/ebpf_dev.h>
 
+#include <sys/ebpf_probe.h>
+
 /*
  * Global reference count. Since ebpf.ko doesn't provide
  * any reference counting, we need to manage our own reference
@@ -79,8 +81,8 @@ ebpf_fopen(ebpf_thread *td, ebpf_file **fp, int *fd, struct ebpf_obj *data)
 	 * the reference count was 0. It doesn't allow to
 	 * perform any file operations except close(2)
 	 */
-	memcpy(&ebpf_objf_ops, &badfileops, sizeof(struct fileops));
 	ebpf_objf_ops.fo_close = ebpf_objfile_close;
+	ebpf_objf_ops.fo_flags = DFLAG_PASSABLE;
 
 	/*
 	 * finit reserves two reference count for us, so release one
@@ -180,6 +182,9 @@ ebpf_dev_fini(void)
 int
 ebpf_dev_init(void)
 {
+
+	memcpy(&ebpf_objf_ops, &badfileops, sizeof(struct fileops));
+
 	ebpf_dev = make_dev_credf(MAKEDEV_ETERNAL_KLD, &ebpf_cdevsw, 0, NULL,
 				  UID_ROOT, GID_WHEEL, 0600, "ebpf");
 	if (ebpf_dev == NULL) {

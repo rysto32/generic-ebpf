@@ -49,10 +49,11 @@ ebpf_prog_init(struct ebpf_prog *prog_obj, struct ebpf_prog_attr *attr)
 
 	memcpy(insts, attr->prog, attr->prog_len);
 
-	prog_obj->type = attr->type;
+	prog_obj->type = ebpf_get_prog_type(attr->type);
 	prog_obj->prog_len = attr->prog_len;
 	prog_obj->prog = insts;
 	prog_obj->deinit = ebpf_prog_deinit_default;
+	prog_obj->probe = NULL;
 
 	return 0;
 }
@@ -60,6 +61,10 @@ ebpf_prog_init(struct ebpf_prog *prog_obj, struct ebpf_prog_attr *attr)
 void
 ebpf_prog_deinit_default(struct ebpf_prog *prog_obj, void *arg)
 {
+	printf("Deinit prog: probe=%p\n", prog_obj->probe);
+	if (prog_obj->probe != NULL) {
+		ebpf_probe_detach(prog_obj->probe);
+	}
 	ebpf_free(prog_obj->prog);
 }
 
@@ -72,5 +77,14 @@ ebpf_prog_deinit(struct ebpf_prog *prog_obj, void *arg)
 
 	if (prog_obj->deinit != NULL) {
 		prog_obj->deinit(prog_obj, arg);
+	}
+}
+
+void
+ebpf_prog_init_vm(struct ebpf_prog *prog, struct ebpf_vm *vm)
+{
+
+	if (prog->type->vm_init) {
+		prog->type->vm_init(vm);
 	}
 }

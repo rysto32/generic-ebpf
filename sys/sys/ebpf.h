@@ -20,6 +20,8 @@
 
 #define EBPF_NAME_MAX 64
 
+#define EBPF_PROBE_NAME_MAX 64
+
 enum ebpf_basic_map_types {
 	EBPF_MAP_TYPE_BAD = 0,
 	EBPF_MAP_TYPE_ARRAY,

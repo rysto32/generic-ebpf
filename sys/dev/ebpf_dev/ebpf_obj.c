@@ -76,7 +76,7 @@ ebpf_obj_delete(struct ebpf_obj *obj, ebpf_thread *td)
 			}
 		}
 
-		ebpf_prog_deinit_default((struct ebpf_prog *)prog, NULL);
+		ebpf_prog_deinit(&prog->prog, NULL);
 		ebpf_free(prog);
 	} else if (obj->type == EBPF_OBJ_TYPE_MAP) {
 		struct ebpf_map *map;

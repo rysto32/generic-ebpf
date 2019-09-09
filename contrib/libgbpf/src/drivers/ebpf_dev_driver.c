@@ -172,6 +172,19 @@ ebpf_dev_get_prog_type_by_name(GBPFDriver *self, const char *name)
 	return -1;
 }
 
+static int
+ebpf_dev_attach_probe(GBPFDriver *self, int prog_desc, const char * probe, int jit)
+{
+	union ebpf_req req;
+	EBPFDevDriver *driver = (EBPFDevDriver *)self;
+
+	req.attach.prog_fd = prog_desc;
+	strlcpy(req.attach.probe_name, probe, sizeof(req.attach.probe_name));
+	req.attach.jit = jit;
+
+	return ioctl(driver->ebpf_fd, EBPFIOC_ATTACH_PROBE, &req);
+}
+
 static void
 ebpf_dev_close_prog_desc(GBPFDriver *self, int prog_desc)
 {
@@ -208,6 +221,7 @@ ebpf_dev_driver_create(void)
 	driver->base.get_prog_type_by_name = ebpf_dev_get_prog_type_by_name;
 	driver->base.close_prog_desc = ebpf_dev_close_prog_desc;
 	driver->base.close_map_desc = ebpf_dev_close_map_desc;
+	driver->base.attach_probe = ebpf_dev_attach_probe;
 
 	return driver;
 }

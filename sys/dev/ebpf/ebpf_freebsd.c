@@ -18,11 +18,18 @@
 
 #include <sys/ebpf.h>
 #include <dev/ebpf/ebpf_platform.h>
+#include <dev/ebpf/ebpf_internal.h>
 #include <dev/ebpf/ebpf_map.h>
 #include <dev/ebpf/ebpf_prog.h>
 
+#include <sys/ebpf_probe.h>
+
 MALLOC_DECLARE(M_EBPFBUF);
 MALLOC_DEFINE(M_EBPFBUF, "ebpf-buffers", "Buffers for ebpf and its subsystems");
+
+static struct ebpf_module ebpf_mod_callbacks = {
+	.fire = ebpf_fire,
+};
 
 /*
  * Platform dependent function implementations
@@ -191,12 +198,14 @@ int
 ebpf_init(void)
 {
 	ebpf_epoch = epoch_alloc(0);
+	ebpf_module_register(&ebpf_mod_callbacks);
 	return 0;
 }
 
 int
 ebpf_deinit(void)
 {
+	ebpf_module_deregister();
 	epoch_free(ebpf_epoch);
 	return 0;
 }

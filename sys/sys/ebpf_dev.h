@@ -73,7 +73,13 @@ union ebpf_req {
 		uint16_t pt_id;
 		struct ebpf_prog_type_info *pt_info;
 	};
+	struct ebpf_req_attach {
+		int prog_fd;
+		char probe_name[EBPF_PROBE_NAME_MAX];
+		int jit;
+	} attach;
 };
+
 
 #define EBPFIOC_LOAD_PROG _IOWR('i', 151, union ebpf_req)
 #define EBPFIOC_MAP_CREATE _IOWR('i', 152, union ebpf_req)
@@ -84,3 +90,4 @@ union ebpf_req {
 #define EBPFIOC_RUN_TEST _IOWR('i', 157, union ebpf_req)
 #define EBPFIOC_GET_MAP_TYPE_INFO _IOWR('i', 158, union ebpf_req)
 #define EBPFIOC_GET_PROG_TYPE_INFO _IOWR('i', 159, union ebpf_req)
+#define EBPFIOC_ATTACH_PROBE _IOWR('i', 160, union ebpf_req)

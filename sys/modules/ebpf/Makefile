@@ -8,12 +8,14 @@ CFLAGS += -I$(KSRC)/sys/$(MACHINE)/compile/$(IDENT)
 CFLAGS += -I../../
 CFLAGS += -Wall
 CFLAGS += -std=c99
+CFLAGS += -DEBPF_HOOKS
 
 KMOD    = ebpf
 
 CORES += ebpf_allocator.c
 CORES += ebpf_freebsd.c
 CORES += ebpf_map.c
+CORES += ebpf_probe.c
 CORES += ebpf_prog.c
 CORES += ebpf_verifer.c
 CORES += ebpf_vm.c
@@ -32,6 +34,8 @@ CORES += ../../amd64/amd64/ebpf_jit_x86_64.c
 SRCS += $(CORES)
 SRCS += $(MAPS)
 SRCS += $(PROGS)
+
+DEBUG_FLAGS=-g
 
 realinstall:
 	install ebpf.ko $(DESTDIR)

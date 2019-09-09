@@ -17,6 +17,7 @@
  */
 
 #include <gbpf/core/gbpf_driver.h>
+#include <errno.h>
 
 int
 gbpf_load_prog(GBPFDriver *driver, uint16_t prog_type, void *prog,
@@ -69,6 +70,15 @@ int32_t
 gbpf_get_prog_type_by_name(GBPFDriver *driver, const char *name)
 {
 	return driver->get_prog_type_by_name(driver, name);
+}
+
+int
+gbpf_attach_probe(GBPFDriver *driver, int prog_desc, const char * probe, int jit)
+{
+	if (!driver->attach_probe)
+		return (ENXIO);
+
+	return driver->attach_probe(driver, prog_desc, probe, jit);
 }
 
 void

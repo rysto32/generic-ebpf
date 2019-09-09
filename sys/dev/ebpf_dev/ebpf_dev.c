@@ -17,27 +17,44 @@
  */
 
 #include "ebpf_dev_platform.h"
+#include <dev/ebpf/ebpf_internal.h>
 #include <dev/ebpf/ebpf_map.h>
 #include <dev/ebpf/ebpf_prog_test.h>
 
 #include <sys/ebpf.h>
 #include <sys/ebpf_vm.h>
 #include <sys/ebpf_dev.h>
+#include <sys/ebpf_probe.h>
+
+static int
+has_null_term(const char * str, int max)
+{
+	int i;
+
+	for (i = 0; i < max; ++i) {
+		if (str[i] == '\0')
+			return (1);
+	}
+
+	return (0);
+}
 
 static void
 ebpf_dev_prog_deinit(struct ebpf_prog *self, void *arg)
 {
-	struct ebpf_obj_prog *prog = (struct ebpf_obj_prog *)self;
-	ebpf_thread *td = (ebpf_thread *)arg;
-	ebpf_fdrop(prog->obj.f, td);
+// 	struct ebpf_obj_prog *prog = (struct ebpf_obj_prog *)self;
+// 	ebpf_thread *td = (ebpf_thread *)arg;
+// 	ebpf_obj_delete(&prog->obj, td);
+// 	ebpf_fdrop(prog->obj.f, td);
 }
 
 static void
 ebpf_dev_map_deinit(struct ebpf_map *self, void *arg)
 {
-	struct ebpf_obj_map *map = (struct ebpf_obj_map *)self;
-	ebpf_thread *td = (ebpf_thread *)arg;
-	ebpf_fdrop(map->obj.f, td);
+// 	struct ebpf_obj_map *map = (struct ebpf_obj_map *)self;
+// 	ebpf_thread *td = (ebpf_thread *)arg;
+// 	ebpf_obj_delete(&map->obj, td);
+// 	ebpf_fdrop(map->obj.f, td);
 }
 
 static int
@@ -191,7 +208,7 @@ ebpf_ioc_load_prog(union ebpf_req *req, ebpf_thread *td)
 	prog->obj.type = EBPF_OBJ_TYPE_PROG;
 
 	// set destructor after object bounded to file
-	prog->prog.deinit = ebpf_dev_prog_deinit;
+// 	prog->prog.deinit = ebpf_dev_prog_deinit;
 
 	error = ebpf_copyout(&fd, req->prog_fdp, sizeof(int));
 	if (error != 0) {
@@ -248,7 +265,7 @@ ebpf_ioc_map_create(union ebpf_req *req, ebpf_thread *td)
 	map->obj.type = EBPF_OBJ_TYPE_MAP;
 
 	// set destructor after object bounded to file
-	map->map.deinit = ebpf_dev_map_deinit;
+// 	map->map.deinit = ebpf_dev_map_deinit;
 
 	error = ebpf_copyout(&fd, req->map_fdp, sizeof(int));
 	if (error != 0) {
@@ -599,6 +616,45 @@ err0:
 	return error;
 }
 
+static int
+ebpf_attach(union ebpf_req *req, ebpf_thread *td)
+{
+	struct ebpf_req_attach *attach;
+	struct ebpf_probe * probe;
+	ebpf_file *f;
+	struct ebpf_obj_prog *prog_obj;
+	int error;
+
+	attach = &req->attach;
+
+	if (!has_null_term(attach->probe_name, sizeof(attach->probe_name))) {
+		return (EINVAL);
+	}
+
+	probe = ebpf_find_probe(attach->probe_name);
+	if (probe == NULL) {
+		return (ENOENT);
+	}
+
+	error = ebpf_fget(td, attach->prog_fd, &f);
+	if (error != 0) {
+		return error;
+	}
+
+	prog_obj = ebpf_objfile_get_container(f);
+	if (prog_obj == NULL) {
+		error = EINVAL;
+		goto err0;
+	}
+
+	ebpf_probe_attach(probe, &prog_obj->prog, attach->jit);
+	error = 0;
+
+err0:
+	ebpf_fdrop(f, td);
+	return (error);
+}
+
 int
 ebpf_ioctl(uint32_t cmd, void *data, ebpf_thread *td)
 {
@@ -636,6 +692,9 @@ ebpf_ioctl(uint32_t cmd, void *data, ebpf_thread *td)
 		break;
 	case EBPFIOC_GET_PROG_TYPE_INFO:
 		error = ebpf_ioc_get_prog_type_info(req);
+		break;
+	case EBPFIOC_ATTACH_PROBE:
+		error = ebpf_attach(req, td);
 		break;
 	default:
 		error = EINVAL;

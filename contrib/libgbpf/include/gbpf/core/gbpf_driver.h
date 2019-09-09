@@ -39,6 +39,7 @@ typedef int32_t(gbpf_get_map_type_by_name_t)(GBPFDriver *self, const char *name)
 typedef int32_t(gbpf_get_prog_type_by_name_t)(GBPFDriver *self, const char *name);
 typedef void(gbpf_close_prog_desc_t)(GBPFDriver *self, int prog_desc);
 typedef void(gbpf_close_map_desc_t)(GBPFDriver *self, int map_desc);
+typedef int(gbpf_attach_probe_t)(GBPFDriver *self, int prog_desc, const char * probe, int jit);
 
 struct gbpf_driver {
 	gbpf_load_prog_t *load_prog;
@@ -51,6 +52,7 @@ struct gbpf_driver {
 	gbpf_get_prog_type_by_name_t *get_prog_type_by_name;
 	gbpf_close_prog_desc_t *close_prog_desc;
 	gbpf_close_map_desc_t *close_map_desc;
+	gbpf_attach_probe_t *attach_probe;
 };
 
 int gbpf_load_prog(GBPFDriver *driver, uint16_t prog_type, void *prog,
@@ -67,5 +69,6 @@ int gbpf_map_get_next_key(GBPFDriver *driver, int map_desc, void *key,
 			  void *next_key);
 int32_t gbpf_get_map_type_by_name(GBPFDriver *self, const char *name);
 int32_t gbpf_get_prog_type_by_name(GBPFDriver *self, const char *name);
+int gbpf_attach_probe(GBPFDriver *self, int prog_desc, const char * probe, int jit);
 void gbpf_close_prog_desc(GBPFDriver *driver, int prog_desc);
 void gbpf_close_map_desc(GBPFDriver *driver, int map_desc);

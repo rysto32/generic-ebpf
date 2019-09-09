@@ -27,6 +27,9 @@
 #define MAX_EXT_FUNCS 64
 #define STACK_SIZE 128
 
+struct ebpf_prog;
+struct ebpf_probe;
+
 struct ebpf_inst;
 typedef uint64_t (*ext_func)(uint64_t arg0, uint64_t arg1, uint64_t arg2,
 			     uint64_t arg3, uint64_t arg4);
@@ -44,3 +47,10 @@ unsigned int ebpf_lookup_registered_function(struct ebpf_vm *vm,
 					     const char *name);
 bool ebpf_validate(const struct ebpf_vm *vm, const struct ebpf_inst *insts,
 		   uint32_t num_insts);
+
+struct ebpf_probe_state;
+
+int ebpf_probe_attach(struct ebpf_probe *probe, struct ebpf_prog *prog, int jit);
+void ebpf_probe_detach(struct ebpf_probe_state *state);
+void ebpf_fire(struct ebpf_probe *probe, uintptr_t arg0, uintptr_t arg1,
+    uintptr_t arg2, uintptr_t arg3, uintptr_t arg4, uintptr_t arg5);
