@@ -17,10 +17,18 @@
  */
 
 #include "ebpf_prog.h"
+#include "ebpf_internal.h"
+
+#ifdef _KERNEL
+#define KERNEL_PROG_TYPE(type) (&type)
+#else
+#define KERNEL_PROG_TYPE(type) (&bad_prog_type)
+#endif
 
 const struct ebpf_prog_type *ebpf_prog_types[] = {
 	[EBPF_PROG_TYPE_BAD]  = &bad_prog_type,
-	[EBPF_PROG_TYPE_TEST] = &test_prog_type
+	[EBPF_PROG_TYPE_TEST] = &test_prog_type,
+	[EBPF_PROG_TYPE_VFS] = KERNEL_PROG_TYPE(vfs_prog_type),
 };
 
 const struct ebpf_prog_type *

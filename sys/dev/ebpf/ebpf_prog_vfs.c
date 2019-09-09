@@ -1,7 +1,7 @@
 /*-
  * SPDX-License-Identifier: Apache License 2.0
  *
- * Copyright 2017-2018 Yutaro Hayakawa
+ * Copyright 2019 Ryan Stone
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,33 +16,30 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "ebpf_prog.h"
+#include "ebpf_map.h"
+#include <sys/ebpf_vm.h>
 
-#define EBPF_NAME_MAX 64
+static void
+vfs_vm_attach_func(struct ebpf_vm *vm)
+{
+	/*
+	 * Attach basic external functions
+	 */
+	ebpf_register(vm, 1, "ebpf_map_update_elem", ebpf_map_update_elem);
+	ebpf_register(vm, 2, "ebpf_map_lookup_elem", ebpf_map_lookup_elem);
+	ebpf_register(vm, 3, "ebpf_map_delete_elem", ebpf_map_delete_elem);
+}
 
-#define EBPF_PROBE_NAME_MAX 64
+static void
+vfs_vm_init(struct ebpf_vm *vm)
+{
 
-enum ebpf_basic_map_types {
-	EBPF_MAP_TYPE_BAD = 0,
-	EBPF_MAP_TYPE_ARRAY,
-	EBPF_MAP_TYPE_PERCPU_ARRAY,
-	EBPF_MAP_TYPE_HASHTABLE,
-	EBPF_MAP_TYPE_PERCPU_HASHTABLE,
-	EBPF_MAP_TYPE_MAX
+	vfs_vm_attach_func(vm);
+}
+
+struct ebpf_prog_type vfs_prog_type = {
+	.name = "vfs",
+	.type = EBPF_PROG_TYPE_VFS,
+	.vm_init = vfs_vm_init,
 };
-
-enum ebpf_basic_prog_types {
-	EBPF_PROG_TYPE_BAD,
-	EBPF_PROG_TYPE_TEST,
-	EBPF_PROG_TYPE_VFS,
-	EBPF_PROG_TYPE_MAX
-};
-
-enum ebpf_map_update_flags {
-	EBPF_ANY = 0,
-	EBPF_NOEXIST,
-	EBPF_EXIST,
-	__EBPF_MAP_UPDATE_FLAGS_MAX
-};
-
-#define EBPF_PROG_MAX_ATTACHED_MAPS 64

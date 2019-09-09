@@ -26,6 +26,7 @@ MAPS += ebpf_map_hashtable.c
 
 PROGS += ebpf_prog_bad.c
 PROGS += ebpf_prog_test.c
+PROGS += ebpf_prog_vfs.c
 
 .if $(MACHINE) == "amd64"
 CORES += ../../amd64/amd64/ebpf_jit_x86_64.c
