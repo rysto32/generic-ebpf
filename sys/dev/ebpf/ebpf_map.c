@@ -75,6 +75,45 @@ ebpf_map_lookup_elem(struct ebpf_map *map, void *key)
 	return EBPF_MAP_TYPE_OPS(map->type).lookup_elem(map, key);
 }
 
+void *
+ebpf_map_path_lookup(struct ebpf_map *map, void **key)
+{
+	const struct ebpf_map_ops *ops;
+	//XXX needs to be dynamically allocated
+	char path[PATH_MAX];
+	void * value = NULL;
+	int end;
+
+	if (map == NULL || key == NULL || map->key_size > sizeof(path)) {
+		return NULL;
+	}
+
+	ops = &EBPF_MAP_TYPE_OPS(map->type);
+
+	memcpy(path, *key, map->key_size);
+	end = map->key_size - 1;
+
+	while (end >= 0) {
+		value = ops->lookup_elem(map, path);
+		if (value != NULL) {
+			goto out;
+		}
+
+		do {
+			path[end] = '\0';
+			--end;
+		} while (end >= 0 && path[end] != '/');
+		path[end] = '\0';
+	}
+
+out:
+	if (value) {
+		*key = (char*)*key + end;
+	}
+
+	return (value);
+}
+
 int
 ebpf_map_lookup_elem_from_user(struct ebpf_map *map, void *key, void *value)
 {

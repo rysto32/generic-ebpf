@@ -73,6 +73,7 @@ struct ebpf_map {
 const struct ebpf_map_type *ebpf_get_map_type(uint16_t type);
 int ebpf_map_init(struct ebpf_map *mapp, struct ebpf_map_attr *attr);
 void *ebpf_map_lookup_elem(struct ebpf_map *map, void *key);
+void *ebpf_map_path_lookup(struct ebpf_map *map, void **key);
 int ebpf_map_update_elem(struct ebpf_map *map, void *key, void *value,
 			 uint64_t flags);
 int ebpf_map_delete_elem(struct ebpf_map *map, void *key);

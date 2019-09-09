@@ -44,6 +44,7 @@ enum ebpf_common_functions {
 	EBPF_FUNC_ebpf_map_update_elem,
 	EBPF_FUNC_ebpf_map_lookup_elem,
 	EBPF_FUNC_ebpf_map_delete_elem,
+	EBPF_FUNC_ebpf_map_lookup_path,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };
 
@@ -56,4 +57,6 @@ enum ebpf_common_functions {
 static EBPF_FUNC(int, ebpf_map_update_elem, struct ebpf_map_def *, void *,
 		 void *, uint64_t);
 static EBPF_FUNC(void *, ebpf_map_lookup_elem, struct ebpf_map_def *, void *);
+static EBPF_FUNC(void *, ebpf_map_lookup_path, struct ebpf_map_def *, void **);
 static EBPF_FUNC(int, ebpf_map_delete_elem, struct ebpf_map_def *, void *);
+

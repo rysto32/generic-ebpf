@@ -29,6 +29,7 @@ vfs_vm_attach_func(struct ebpf_vm *vm)
 	ebpf_register(vm, 1, "ebpf_map_update_elem", ebpf_map_update_elem);
 	ebpf_register(vm, 2, "ebpf_map_lookup_elem", ebpf_map_lookup_elem);
 	ebpf_register(vm, 3, "ebpf_map_delete_elem", ebpf_map_delete_elem);
+	ebpf_register(vm, 4, "ebpf_map_path_lookup", ebpf_map_path_lookup);
 }
 
 static void
