@@ -199,21 +199,22 @@ static int
 find_prog_sym(struct elf_refs *refs)
 {
 	GElf_Sym sym;
+	int ret = -1;
 	for (int i = 0; gelf_getsym(refs->symbols, i, &sym); i++) {
-		if (sym.st_shndx == refs->prog_sec_idx && sym.st_value == 0) {
+		if (sym.st_shndx == refs->prog_sec_idx && GELF_ST_BIND(sym.st_info) == STB_GLOBAL) {
 			if (refs->walker->on_prog) {
 				const char *name = elf_strptr(
 				    refs->elf, refs->ehdr->e_shstrndx,
 				    sym.st_name);
 				D("Found prog name: %s", name);
 				refs->walker->on_prog(refs->walker, name,
-						      (void *)refs->prog->d_buf,
-						      refs->prog->d_size);
+					      (void*)((uint8_t *)refs->prog->d_buf + sym.st_value),
+						      sym.st_size);
 			}
-			return 0;
+			ret = 0;
 		}
 	}
-	return -1;
+	return ret;
 }
 
 int
