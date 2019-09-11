@@ -23,6 +23,7 @@
 #include <dev/ebpf/ebpf_prog.h>
 
 #include <sys/ebpf_probe.h>
+#include <sys/syscallsubr.h>
 
 MALLOC_DECLARE(M_EBPFBUF);
 MALLOC_DEFINE(M_EBPFBUF, "ebpf-buffers", "Buffers for ebpf and its subsystems");
@@ -208,6 +209,105 @@ ebpf_deinit(void)
 	ebpf_module_deregister();
 	epoch_free(ebpf_epoch);
 	return 0;
+}
+
+
+int
+ebpf_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
+{
+	int error;
+
+	error = copyinstr(uaddr, kaddr, len, done);
+	curthread->td_errno = error;
+
+	return (error);
+}
+
+int ebpf_copyout(const void *kaddr, void *uaddr, size_t len)
+{
+	int error;
+
+	error = copyout(kaddr, uaddr, len);
+	curthread->td_errno = error;
+
+	return (error);
+}
+
+int
+ebpf_dup(int fd)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	error = kern_dup(td, FDDUP_NORMAL, 0, fd, 0);
+	td->td_errno = error;
+
+	/* Return the file descriptor. */
+	return (td->td_retval[0]);
+}
+
+int
+ebpf_openat(int fd, const char * path, int flags, int mode)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	error = kern_openat(td, fd, path, UIO_SYSSPACE, flags, mode);
+	td->td_errno = error;
+
+	/* Return the file descriptor. */
+	return (td->td_retval[0]);
+}
+
+int
+ebpf_fstatat(int fd, const char *path, struct stat *sb, int flag)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+
+	error = kern_statat(curthread, flag, fd, path, UIO_SYSSPACE, sb, NULL);
+	td->td_errno = error;
+
+	return (error);
+}
+
+int
+ebpf_fstat(int fd, struct stat *sb)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+
+	error = kern_fstat(curthread, fd, sb);
+	td->td_errno = error;
+
+	return (error);
+}
+
+int
+ebpf_faccessat(int fd, const char *path, int mode, int flag)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	error = kern_accessat(curthread, fd, path, UIO_SYSSPACE, flag, mode);
+	td->td_errno = error;
+
+	return (error);
+}
+
+int
+ebpf_set_errno(int error)
+{
+
+	curthread->td_errno = error;
+	return (0);
 }
 
 /*

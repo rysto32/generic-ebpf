@@ -19,6 +19,7 @@
 #pragma once
 
 #include <sys/ebpf.h>
+#include <sys/ebpf_probe.h>
 
 struct ebpf_map_type_info {
 	char name[EBPF_NAME_MAX];

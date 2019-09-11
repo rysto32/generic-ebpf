@@ -52,5 +52,14 @@ struct ebpf_probe_state;
 
 int ebpf_probe_attach(struct ebpf_probe *probe, struct ebpf_prog *prog, int jit);
 void ebpf_probe_detach(struct ebpf_probe_state *state);
-void ebpf_fire(struct ebpf_probe *probe, uintptr_t arg0, uintptr_t arg1,
+int ebpf_fire(struct ebpf_probe *probe, uintptr_t arg0, uintptr_t arg1,
     uintptr_t arg2, uintptr_t arg3, uintptr_t arg4, uintptr_t arg5);
+
+int ebpf_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done);
+int ebpf_copyout(const void *kaddr, void *uaddr, size_t len);
+int ebpf_dup(int fd);
+int ebpf_openat(int fd, const char * path, int flags, int mode);
+int ebpf_fstat(int fd, struct stat *sb);
+int ebpf_fstatat(int fd, const char *path, struct stat *sb, int flag);
+int ebpf_faccessat(int fd, const char *path, int mode, int flag);
+int ebpf_set_errno(int error);

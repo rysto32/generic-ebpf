@@ -18,7 +18,9 @@
 
 #include "ebpf_prog.h"
 #include "ebpf_map.h"
+#include "ebpf_internal.h"
 #include <sys/ebpf_vm.h>
+#include <sys/ebpf_function_idx.h>
 
 static void
 vfs_vm_attach_func(struct ebpf_vm *vm)
@@ -26,10 +28,19 @@ vfs_vm_attach_func(struct ebpf_vm *vm)
 	/*
 	 * Attach basic external functions
 	 */
-	ebpf_register(vm, 1, "ebpf_map_update_elem", ebpf_map_update_elem);
-	ebpf_register(vm, 2, "ebpf_map_lookup_elem", ebpf_map_lookup_elem);
-	ebpf_register(vm, 3, "ebpf_map_delete_elem", ebpf_map_delete_elem);
-	ebpf_register(vm, 4, "ebpf_map_path_lookup", ebpf_map_path_lookup);
+	ebpf_register(vm, EBPF_FUNC_ebpf_map_update_elem, "ebpf_map_update_elem", ebpf_map_update_elem);
+	ebpf_register(vm, EBPF_FUNC_ebpf_map_lookup_elem, "ebpf_map_lookup_elem", ebpf_map_lookup_elem);
+	ebpf_register(vm, EBPF_FUNC_ebpf_map_delete_elem, "ebpf_map_delete_elem", ebpf_map_delete_elem);
+	ebpf_register(vm, EBPF_FUNC_ebpf_map_lookup_path, "ebpf_map_path_lookup", ebpf_map_path_lookup);
+
+	ebpf_register(vm, EBPF_FUNC_copyinstr, "copyinstr", ebpf_copyinstr);
+	ebpf_register(vm, EBPF_FUNC_copyout, "copyout", ebpf_copyout);
+	ebpf_register(vm, EBPF_FUNC_dup, "dup", ebpf_dup);
+	ebpf_register(vm, EBPF_FUNC_openat, "openat", ebpf_openat);
+	ebpf_register(vm, EBPF_FUNC_fstat, "fstat", ebpf_fstat);
+	ebpf_register(vm, EBPF_FUNC_fstatat, "fstatat", ebpf_fstatat);
+	ebpf_register(vm, EBPF_FUNC_faccessat, "faccessat", ebpf_faccessat);
+	ebpf_register(vm, EBPF_FUNC_set_errno, "set_errno", ebpf_set_errno);
 }
 
 static void

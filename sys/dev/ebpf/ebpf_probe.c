@@ -98,7 +98,7 @@ ebpf_probe_detach(struct ebpf_probe_state *state)
 	ebpf_free(state);
 }
 
-void
+int
 ebpf_fire(struct ebpf_probe *probe, uintptr_t arg0, uintptr_t arg1,
     uintptr_t arg2, uintptr_t arg3, uintptr_t arg4, uintptr_t arg5)
 {
@@ -106,11 +106,11 @@ ebpf_fire(struct ebpf_probe *probe, uintptr_t arg0, uintptr_t arg1,
 
 	state = probe->module_state;
 	if (state == NULL)
-		return;
+		return (EBPF_ACTION_CONTINUE);
 
 	if (state->jit) {
-		ebpf_exec_jit(state->vm, (void*)arg0, arg1);
+		return ebpf_exec_jit(state->vm, (void*)arg0, arg1);
 	} else {
-		ebpf_exec(state->vm, (void*)arg0, arg1);
+		return ebpf_exec(state->vm, (void*)arg0, arg1);
 	}
 }

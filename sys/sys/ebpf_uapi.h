@@ -19,6 +19,8 @@
 #pragma once
 
 #include <sys/ebpf.h>
+#include <sys/ebpf_defines.h>
+#include <sys/ebpf_function_idx.h>
 
 #define SECTION(name) __attribute__((section(name)))
 
@@ -38,15 +40,6 @@ struct ebpf_map_def {
 				     .value_size = _value_size,                \
 				     .max_entries = _max_entries,              \
 				     .flags = _flags};
-
-enum ebpf_common_functions {
-	EBPF_FUNC_unspec = 0,
-	EBPF_FUNC_ebpf_map_update_elem,
-	EBPF_FUNC_ebpf_map_lookup_elem,
-	EBPF_FUNC_ebpf_map_delete_elem,
-	EBPF_FUNC_ebpf_map_lookup_path,
-	__EBPF_COMMON_FUNCTIONS_MAX
-};
 
 #define EBPF_FUNC(RETTYPE, NAME, ...)                                          \
 	RETTYPE(*NAME)                                                         \
