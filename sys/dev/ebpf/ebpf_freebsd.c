@@ -25,6 +25,7 @@
 #include <sys/ebpf_probe.h>
 #include <sys/proc.h>
 #include <sys/syscallsubr.h>
+#include <sys/wait.h>
 #include <sys/unistd.h>
 
 MALLOC_DECLARE(M_EBPFBUF);
@@ -347,6 +348,25 @@ ebpf_probe_pdfork(int *fd, int flags)
 	} else {
 		return (-1);
 	}
+}
+
+int
+ebpf_probe_pdwait4_nohang(int fd, int* status, int options, struct rusage *ru)
+{
+	int error;
+	struct thread *td;
+
+	/*
+	 * We cannot block here as the process that we block on could block on
+	 * us holding the ebpf state lock, leading to a deadlock.
+	 */
+	options |= WNOHANG;
+
+	td = curthread;
+	error = kern_pdwait4(td, fd, status, options, ru);
+	td->td_errno = error;
+
+	return (error);
 }
 
 /*

@@ -65,4 +65,5 @@ int ebpf_probe_faccessat(int fd, const char *path, int mode, int flag);
 int ebpf_probe_set_errno(int error);
 int ebpf_probe_set_syscall_retval(int ret0, int ret1);
 pid_t ebpf_probe_pdfork(int *fd, int flags);
+int ebpf_probe_pdwait4_nohang(int fd, int* status, int options, struct rusage *ru);
 
