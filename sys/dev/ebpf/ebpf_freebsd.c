@@ -310,6 +310,17 @@ ebpf_set_errno(int error)
 	return (0);
 }
 
+int
+ebpf_set_syscall_retval(int ret0, int ret1)
+{
+	struct thread *td;
+
+	td = curthread;
+	td->td_retval[0] = ret0;
+	td->td_retval[1] = ret1;
+	return (0);
+}
+
 /*
  * Kernel module operations
  */
