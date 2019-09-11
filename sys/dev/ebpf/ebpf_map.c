@@ -81,7 +81,9 @@ ebpf_map_path_lookup(struct ebpf_map *map, void **key)
 	const struct ebpf_map_ops *ops;
 	//XXX needs to be dynamically allocated
 	char path[PATH_MAX];
+	char *p;
 	void * value = NULL;
+	int absolute;
 	int end;
 
 	if (map == NULL || key == NULL || map->key_size > sizeof(path)) {
@@ -93,7 +95,9 @@ ebpf_map_path_lookup(struct ebpf_map *map, void **key)
 	memcpy(path, *key, map->key_size);
 	end = map->key_size - 1;
 
-	while (end >= 0) {
+	absolute = path[0] == '/';
+
+	while (end > 0) {
 		value = ops->lookup_elem(map, path);
 		if (value != NULL) {
 			goto out;
@@ -102,13 +106,23 @@ ebpf_map_path_lookup(struct ebpf_map *map, void **key)
 		do {
 			path[end] = '\0';
 			--end;
-		} while (end >= 0 && path[end] != '/');
+		} while (end > 0 && path[end] != '/');
 		path[end] = '\0';
+	}
+
+	if (absolute) {
+		path[0] = '/';
+		value = ops->lookup_elem(map, path);
+		end = 0;
 	}
 
 out:
 	if (value) {
-		*key = (char*)*key + end;
+		p = (char*)*key + end;
+		while (*p == '/') {
+			++p;
+		}
+		*key = p;
 	}
 
 	return (value);
