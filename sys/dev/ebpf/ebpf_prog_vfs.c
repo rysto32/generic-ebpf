@@ -43,6 +43,7 @@ vfs_vm_attach_func(struct ebpf_vm *vm)
 	ebpf_register(vm, EBPF_FUNC_set_errno, "set_errno", ebpf_set_errno);
 	ebpf_register(vm, EBPF_FUNC_set_syscall_retval, "set_syscall_retval",
 	    ebpf_set_syscall_retval);
+	ebpf_register(vm, EBPF_FUNC_pdfork, "pdfork", ebpf_pdfork);
 }
 
 static void

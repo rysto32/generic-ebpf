@@ -64,3 +64,5 @@ int ebpf_fstatat(int fd, const char *path, struct stat *sb, int flag);
 int ebpf_faccessat(int fd, const char *path, int mode, int flag);
 int ebpf_set_errno(int error);
 int ebpf_set_syscall_retval(int ret0, int ret1);
+pid_t ebpf_pdfork(int *fd, int flags);
+

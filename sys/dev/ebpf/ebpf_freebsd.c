@@ -23,7 +23,9 @@
 #include <dev/ebpf/ebpf_prog.h>
 
 #include <sys/ebpf_probe.h>
+#include <sys/proc.h>
 #include <sys/syscallsubr.h>
+#include <sys/unistd.h>
 
 MALLOC_DECLARE(M_EBPFBUF);
 MALLOC_DEFINE(M_EBPFBUF, "ebpf-buffers", "Buffers for ebpf and its subsystems");
@@ -319,6 +321,31 @@ ebpf_set_syscall_retval(int ret0, int ret1)
 	td->td_retval[0] = ret0;
 	td->td_retval[1] = ret1;
 	return (0);
+}
+
+
+pid_t
+ebpf_pdfork(int *fd, int flags)
+{
+	struct thread *td;
+	struct fork_req fr;
+	int error, pid;
+
+	bzero(&fr, sizeof(fr));
+	fr.fr_flags = RFFDG | RFPROC | RFPROCDESC;
+	fr.fr_pidp = &pid;
+	fr.fr_pd_fd = fd;
+	fr.fr_pd_flags = flags;
+
+	td = curthread;
+	error = fork1(td, &fr);
+	td->td_errno = error;
+
+	if (error == 0) {
+		return (pid);
+	} else {
+		return (-1);
+	}
 }
 
 /*
