@@ -1,6 +1,6 @@
 .include <bsd.own.mk>
 
-.PATH: ${.CURDIR}/../../dev/ebpf
+.PATH: ${.CURDIR}/../../dev/ebpf ${.CURDIR}/../../dev/ebpf_dev
 
 IDENT  != uname -i
 
@@ -31,6 +31,10 @@ PROGS += ebpf_prog_vfs.c
 .if $(MACHINE) == "amd64"
 CORES += ../../amd64/amd64/ebpf_jit_x86_64.c
 .endif
+
+SRCS += ebpf_dev_freebsd.c
+SRCS += ebpf_obj.c
+SRCS += ebpf_dev.c
 
 SRCS += $(CORES)
 SRCS += $(MAPS)
