@@ -33,17 +33,17 @@ vfs_vm_attach_func(struct ebpf_vm *vm)
 	ebpf_register(vm, EBPF_FUNC_ebpf_map_delete_elem, "ebpf_map_delete_elem", ebpf_map_delete_elem);
 	ebpf_register(vm, EBPF_FUNC_ebpf_map_lookup_path, "ebpf_map_path_lookup", ebpf_map_path_lookup);
 
-	ebpf_register(vm, EBPF_FUNC_copyinstr, "copyinstr", ebpf_copyinstr);
-	ebpf_register(vm, EBPF_FUNC_copyout, "copyout", ebpf_copyout);
-	ebpf_register(vm, EBPF_FUNC_dup, "dup", ebpf_dup);
-	ebpf_register(vm, EBPF_FUNC_openat, "openat", ebpf_openat);
-	ebpf_register(vm, EBPF_FUNC_fstat, "fstat", ebpf_fstat);
-	ebpf_register(vm, EBPF_FUNC_fstatat, "fstatat", ebpf_fstatat);
-	ebpf_register(vm, EBPF_FUNC_faccessat, "faccessat", ebpf_faccessat);
-	ebpf_register(vm, EBPF_FUNC_set_errno, "set_errno", ebpf_set_errno);
+	ebpf_register(vm, EBPF_FUNC_copyinstr, "copyinstr", ebpf_probe_copyinstr);
+	ebpf_register(vm, EBPF_FUNC_copyout, "copyout", ebpf_probe_copyout);
+	ebpf_register(vm, EBPF_FUNC_dup, "dup", ebpf_probe_dup);
+	ebpf_register(vm, EBPF_FUNC_openat, "openat", ebpf_probe_openat);
+	ebpf_register(vm, EBPF_FUNC_fstat, "fstat", ebpf_probe_fstat);
+	ebpf_register(vm, EBPF_FUNC_fstatat, "fstatat", ebpf_probe_fstatat);
+	ebpf_register(vm, EBPF_FUNC_faccessat, "faccessat", ebpf_probe_faccessat);
+	ebpf_register(vm, EBPF_FUNC_set_errno, "set_errno", ebpf_probe_set_errno);
 	ebpf_register(vm, EBPF_FUNC_set_syscall_retval, "set_syscall_retval",
-	    ebpf_set_syscall_retval);
-	ebpf_register(vm, EBPF_FUNC_pdfork, "pdfork", ebpf_pdfork);
+	    ebpf_probe_set_syscall_retval);
+	ebpf_register(vm, EBPF_FUNC_pdfork, "pdfork", ebpf_probe_pdfork);
 }
 
 static void

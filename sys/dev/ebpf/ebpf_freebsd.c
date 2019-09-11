@@ -215,7 +215,7 @@ ebpf_deinit(void)
 
 
 int
-ebpf_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
+ebpf_probe_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
 	int error;
 
@@ -225,7 +225,8 @@ ebpf_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	return (error);
 }
 
-int ebpf_copyout(const void *kaddr, void *uaddr, size_t len)
+int
+ebpf_probe_copyout(const void *kaddr, void *uaddr, size_t len)
 {
 	int error;
 
@@ -236,7 +237,7 @@ int ebpf_copyout(const void *kaddr, void *uaddr, size_t len)
 }
 
 int
-ebpf_dup(int fd)
+ebpf_probe_dup(int fd)
 {
 	struct thread *td;
 	int error;
@@ -250,7 +251,7 @@ ebpf_dup(int fd)
 }
 
 int
-ebpf_openat(int fd, const char * path, int flags, int mode)
+ebpf_probe_openat(int fd, const char * path, int flags, int mode)
 {
 	struct thread *td;
 	int error;
@@ -264,7 +265,7 @@ ebpf_openat(int fd, const char * path, int flags, int mode)
 }
 
 int
-ebpf_fstatat(int fd, const char *path, struct stat *sb, int flag)
+ebpf_probe_fstatat(int fd, const char *path, struct stat *sb, int flag)
 {
 	struct thread *td;
 	int error;
@@ -278,7 +279,7 @@ ebpf_fstatat(int fd, const char *path, struct stat *sb, int flag)
 }
 
 int
-ebpf_fstat(int fd, struct stat *sb)
+ebpf_probe_fstat(int fd, struct stat *sb)
 {
 	struct thread *td;
 	int error;
@@ -292,7 +293,7 @@ ebpf_fstat(int fd, struct stat *sb)
 }
 
 int
-ebpf_faccessat(int fd, const char *path, int mode, int flag)
+ebpf_probe_faccessat(int fd, const char *path, int mode, int flag)
 {
 	struct thread *td;
 	int error;
@@ -305,7 +306,7 @@ ebpf_faccessat(int fd, const char *path, int mode, int flag)
 }
 
 int
-ebpf_set_errno(int error)
+ebpf_probe_set_errno(int error)
 {
 
 	curthread->td_errno = error;
@@ -313,7 +314,7 @@ ebpf_set_errno(int error)
 }
 
 int
-ebpf_set_syscall_retval(int ret0, int ret1)
+ebpf_probe_set_syscall_retval(int ret0, int ret1)
 {
 	struct thread *td;
 
@@ -325,7 +326,7 @@ ebpf_set_syscall_retval(int ret0, int ret1)
 
 
 pid_t
-ebpf_pdfork(int *fd, int flags)
+ebpf_probe_pdfork(int *fd, int flags)
 {
 	struct thread *td;
 	struct fork_req fr;
