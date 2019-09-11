@@ -23,7 +23,8 @@ const struct ebpf_map_type *ebpf_map_types[] = {
 	[EBPF_MAP_TYPE_ARRAY]            = &array_map_type,
 	[EBPF_MAP_TYPE_PERCPU_ARRAY]     = &percpu_array_map_type,
 	[EBPF_MAP_TYPE_HASHTABLE]        = &hashtable_map_type,
-	[EBPF_MAP_TYPE_PERCPU_HASHTABLE] = &percpu_hashtable_map_type
+	[EBPF_MAP_TYPE_PERCPU_HASHTABLE] = &percpu_hashtable_map_type,
+	[EBPF_MAP_TYPE_PROGARRAY]        = &progarray_map_type,
 };
 
 #define EBPF_MAP_TYPE_OPS(_type) (ebpf_map_types[_type]->ops)
