@@ -8,6 +8,7 @@ DRIVERS=gbpf_null_driver.c \
 
 CFLAGS+=-Ofast \
 	-I ${BASE}/sys \
+	-I ${SYSDIR} \
 	-I ${CURDIR}/include \
 	-Wall \
 	-Wextra \
