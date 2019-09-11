@@ -54,15 +54,21 @@ struct elf_refs {
 	GBPFDriver *driver;
 };
 
-static inline int
-find_map_entry(char **maps, uint16_t num_maps, char *name)
+struct map_reloc
+{
+	const char *name;
+	int map_desc;
+};
+
+static inline struct map_reloc *
+find_map_entry(struct map_reloc *maps, uint16_t num_maps, char *name)
 {
 	for (uint16_t i = 0; i < num_maps; i++) {
-		if (strcmp(maps[i], name) == 0) {
-			return 1;
+		if (strcmp(maps[i].name, name) == 0) {
+			return &maps[i];
 		}
 	}
-	return 0;
+	return NULL;
 }
 
 static int
@@ -73,8 +79,10 @@ resolve_relocations(struct elf_refs *refs)
 	int map_desc;
 	struct ebpf_map_def *map_def;
 	char *symname;
-	char *discovered_maps[EBPF_PROG_MAX_ATTACHED_MAPS];
+	struct map_reloc discovered_maps[EBPF_PROG_MAX_ATTACHED_MAPS];
+	struct map_reloc *reloc;
 	uint16_t num_maps = 0;
+	int ret = 0;
 	GElf_Rel rel;
 	GElf_Sym sym;
 
@@ -99,9 +107,9 @@ resolve_relocations(struct elf_refs *refs)
 			  map_def->type, map_def->key_size, map_def->value_size,
 			  map_def->max_entries, map_def->flags);
 
-			int found =
+			reloc =
 			    find_map_entry(discovered_maps, num_maps, symname);
-			if (!found) {
+			if (!reloc) {
 				int32_t type_id =
 					refs->driver->get_map_type_by_name(refs->driver,
 							map_def->type);
@@ -126,15 +134,19 @@ resolve_relocations(struct elf_refs *refs)
 						    map_desc, map_def);
 					}
 
-					discovered_maps[num_maps] = symname;
+					reloc = &discovered_maps[num_maps];
+					reloc->name = symname;
+					reloc->map_desc = map_desc;
 					num_maps++;
 				} else {
 					D("Too many maps");
+					ret = -1;
 					break;
 				}
 			}
 
-			inst->imm = map_desc;
+			D("Map to %d", reloc->map_desc);
+			inst->imm = reloc->map_desc;
 			inst->src = EBPF_PSEUDO_MAP_DESC;
 
 			continue;
@@ -142,9 +154,10 @@ resolve_relocations(struct elf_refs *refs)
 
 		D("Unknown type relocation entry. name: %s r_offset: %lu",
 		  symname, rel.r_offset);
+		ret = -1;
 	}
 
-	return 0;
+	return ret;
 }
 
 static int
