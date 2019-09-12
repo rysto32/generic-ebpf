@@ -151,13 +151,13 @@ uint32(uint64_t x)
 }
 
 uint64_t
-ebpf_exec(const struct ebpf_vm *vm, struct ebpf_vm_state *state, void *mem,
-    size_t mem_len)
+ebpf_exec(const struct ebpf_vm *vm, struct ebpf_vm_state *state)
 {
 	uint16_t pc = 0;
 	const struct ebpf_inst *insts;
 	uint64_t reg[16];
 	uint64_t stack[(STACK_SIZE + 7) / 8];
+	int i;
 
 	if (vm == NULL) {
 		return UINT64_MAX;
@@ -169,7 +169,11 @@ ebpf_exec(const struct ebpf_vm *vm, struct ebpf_vm_state *state, void *mem,
 	}
 
 	insts = vm->insts;
-	reg[1] = (uintptr_t)mem;
+	bzero(reg, sizeof(reg));
+	bzero(stack, sizeof(stack));
+	for (i = 0; i < state->num_args; ++i) {
+		reg[1 + i] = state->next_vm_args[i];
+	}
 	reg[10] = (uintptr_t)stack + sizeof(stack);
 
 	while (1) {
@@ -571,6 +575,9 @@ ebpf_exec(const struct ebpf_vm *vm, struct ebpf_vm_state *state, void *mem,
 		case EBPF_OP_CALL:
 			reg[0] = vm->ext_funcs[inst.imm](state, reg[1], reg[2],
 							 reg[3], reg[4], reg[5]);
+			if (state->next_vm != NULL) {
+				return EBPF_ACTION_RESTART;
+			}
 			break;
 		default:
 			ebpf_error("Unknown instruction!\n");
@@ -580,13 +587,16 @@ ebpf_exec(const struct ebpf_vm *vm, struct ebpf_vm_state *state, void *mem,
 }
 
 uint64_t
-ebpf_exec_jit(const struct ebpf_vm *vm, struct ebpf_vm_state *state, void *mem,
-    size_t mem_len)
+ebpf_exec_jit(const struct ebpf_vm *vm, struct ebpf_vm_state *state)
 {
 	if (vm == NULL) {
 		return UINT64_MAX;
 	}
 
+	/* XXX needs to catch up to:
+	 * - state arg to function calls
+	 * - initialization of multiple arguments
+	 */
 #if 0
 	if (vm->jitted != NULL) {
 		return vm->jitted(mem, mem_len);
@@ -594,6 +604,17 @@ ebpf_exec_jit(const struct ebpf_vm *vm, struct ebpf_vm_state *state, void *mem,
 		return UINT64_MAX;
 	}
 #else
-	return ebpf_exec(vm, state, mem, mem_len);
+	return ebpf_exec(vm, state);
 #endif
+}
+
+void
+ebpf_vm_init_state(struct ebpf_vm_state *vm_state)
+{
+
+	vm_state->vm_fp = NULL;
+	vm_state->next_vm = NULL;
+	vm_state->deferred_func = NULL;
+	vm_state->num_tail_calls = 0;
+	bzero(&vm_state->next_vm_args, sizeof(vm_state->next_vm_args));
 }

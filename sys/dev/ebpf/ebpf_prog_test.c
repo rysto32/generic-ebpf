@@ -21,6 +21,8 @@
 #include "ebpf_map.h"
 #include <sys/ebpf_vm.h>
 
+#include "ebpf_internal.h"
+
 static void
 test_vm_attach_func(struct ebpf_vm *vm)
 {
@@ -61,15 +63,18 @@ ebpf_run_test(struct ebpf_inst *prog, uint32_t prog_len,
 		goto err0;
 	}
 
+	state.next_vm_args[0] = (uintptr_t)ctx;
+	state.next_vm_args[1] = ctx_len;
+	state.num_args = 2;
 	if (jit) {
 		ebpf_jit_fn fn = ebpf_compile(vm);
 		if (fn == NULL) {
 			error = EINVAL;
 			goto err0;
 		}
-		*result = ebpf_exec_jit(vm, &state, ctx, ctx_len);
+		*result = ebpf_exec_jit(vm, &state);
 	} else {
-		*result = ebpf_exec(vm, &state, ctx, ctx_len);
+		*result = ebpf_exec(vm, &state);
 	}
 
 err0:

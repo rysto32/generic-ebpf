@@ -24,6 +24,8 @@
 #include <sys/ebpf_vm.h>
 #include <sys/ebpf_inst.h>
 
+#include <dev/ebpf_dev/ebpf_dev_platform.h>
+
 #define MAX_INSTS 65536
 #define MAX_EXT_FUNCS 64
 #define STACK_SIZE 128
@@ -50,12 +52,34 @@ struct ebpf_vm {
 	void *progtype_state;
 };
 
+struct ebpf_vm_state
+{
+	struct ebpf_vm *next_vm;
+	ebpf_file *vm_fp;
+	uint64_t next_vm_args[5];
+	int num_args;
+	void (*deferred_func)(struct ebpf_vm_state *);
+	int cpu;
+	int num_tail_calls;
+
+	union {
+		struct {
+			void *arg;
+			int fd;
+			int options;
+			struct rusage rusage;
+		} wait4;
+	} scratch;
+};
+
 unsigned int ebpf_lookup_registered_function(struct ebpf_vm *vm,
 					     const char *name);
 bool ebpf_validate(const struct ebpf_vm *vm, const struct ebpf_inst *insts,
 		   uint32_t num_insts);
 
 int ebpf_fd_to_program(ebpf_thread *td, int fd, ebpf_file **fp, struct ebpf_prog **prog);
+
+void ebpf_vm_init_state(struct ebpf_vm_state *state);
 
 struct ebpf_probe_state;
 

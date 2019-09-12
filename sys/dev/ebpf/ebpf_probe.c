@@ -24,7 +24,6 @@
 struct ebpf_probe_state
 {
 	struct ebpf_probe *probe;
-	struct ebpf_vm *vm;
 	struct ebpf_prog *prog;
 	int jit;
 };
@@ -32,39 +31,11 @@ struct ebpf_probe_state
 int
 ebpf_probe_attach(struct ebpf_probe *probe, struct ebpf_prog *prog, int jit)
 {
-	struct ebpf_vm *vm;
 	struct ebpf_probe_state *state;
-	int error;
 
 	state = ebpf_calloc(sizeof(*state), 1);
 	if (state == NULL)
 		return (ENOMEM);
-
-	vm = ebpf_create();
-	if (vm == NULL) {
-		error = ENOMEM;
-		goto fail;
-	}
-
-	state->vm = vm;
-	error = ebpf_prog_init_vm(prog, vm);
-	if (error != 0) {
-		goto fail;
-	}
-
-	error = ebpf_load(vm, prog->prog, prog->prog_len);
-	if (error < 0) {
-		error = EINVAL;
-		goto fail;
-	}
-
-	if (jit) {
-		ebpf_jit_fn fn = ebpf_compile(vm);
-		if (fn == NULL) {
-			error = EINVAL;
-			goto fail;
-		}
-	}
 
 	state->jit = jit;
 	state->probe = probe;
@@ -77,13 +48,6 @@ ebpf_probe_attach(struct ebpf_probe *probe, struct ebpf_prog *prog, int jit)
 
 	printf("Attach to probe '%s'\n", probe->name);
 	return (0);
-
-fail:
-	if (state && state->vm) {
-		ebpf_destroy(vm);
-	}
-	ebpf_free(state);
-	return (error);
 }
 
 void
@@ -95,11 +59,9 @@ ebpf_probe_detach(struct ebpf_probe_state *state)
 	printf("Detach from '%s'\n", probe->name);
 
 	probe->module_state = NULL;
-	atomic_set_rel_int(&probe->active, 0);
 
 	ebpf_probe_drain(probe);
 
-	ebpf_destroy(state->vm);
 	ebpf_free(state);
 }
 
@@ -107,7 +69,9 @@ int
 ebpf_fire(struct ebpf_probe *probe, uintptr_t arg0, uintptr_t arg1,
     uintptr_t arg2, uintptr_t arg3, uintptr_t arg4, uintptr_t arg5)
 {
+	ebpf_thread *td;
 	struct ebpf_probe_state *state;
+	struct ebpf_vm *vm;
 	struct ebpf_vm_state vm_state;
 	int error, ret;
 
@@ -115,19 +79,43 @@ ebpf_fire(struct ebpf_probe *probe, uintptr_t arg0, uintptr_t arg1,
 	if (state == NULL)
 		return (EBPF_ACTION_CONTINUE);
 
-	error = ebpf_prog_reserve_cpu(state->prog, state->vm, &vm_state);
-	if (error != 0) {
-		ebpf_probe_set_errno(&vm_state, error);
-		return (EBPF_ACTION_RETURN);
-	}
+	ebpf_vm_init_state(&vm_state);
 
-	if (state->jit) {
-		ret = ebpf_exec_jit(state->vm, &vm_state, (void*)arg0, arg1);
-	} else {
-		ret = ebpf_exec(state->vm, &vm_state, (void*)arg0, arg1);
-	}
+	vm_state.next_vm = state->prog->vm;
+	vm_state.next_vm_args[0] = arg0;
+	vm_state.next_vm_args[1] = arg1;
+	vm_state.num_args = 2;
 
-	ebpf_prog_release_cpu(state->prog, state->vm, &vm_state);
+	td = ebpf_curthread();
+
+	while (vm_state.next_vm != NULL && vm_state.num_tail_calls < 32) {
+		vm = vm_state.next_vm;
+		vm_state.next_vm = NULL;
+
+		error = ebpf_prog_reserve_cpu(state->prog, vm, &vm_state);
+		if (error != 0) {
+			ebpf_probe_set_errno(&vm_state, error);
+			return (EBPF_ACTION_RETURN);
+		}
+
+		if (state->jit) {
+			ret = ebpf_exec_jit(vm, &vm_state);
+		} else {
+			ret = ebpf_exec(vm, &vm_state);
+		}
+
+		ebpf_prog_release_cpu(state->prog, vm, &vm_state);
+		if (vm_state.vm_fp != NULL) {
+			ebpf_fdrop(vm_state.vm_fp, td);
+			vm_state.vm_fp = NULL;
+		}
+
+		if (vm_state.deferred_func != 0) {
+			vm_state.deferred_func(&vm_state);
+			vm_state.deferred_func = NULL;
+		}
+		vm_state.num_tail_calls++;
+	}
 
 	return (ret);
 }
