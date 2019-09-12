@@ -214,6 +214,46 @@ ebpf_deinit(void)
 	return 0;
 }
 
+int
+ebpf_fd_to_program(ebpf_thread *td, int fd, ebpf_file **fp_out, struct ebpf_prog **prog_out)
+{
+	int error;
+	ebpf_file *fp;
+	struct ebpf_obj_prog *prog;
+	struct ebpf_obj *obj;
+
+	error = ebpf_fget(td, fd, &fp);
+	if (error != 0) {
+		return (error);
+	}
+
+	if (!is_ebpf_objfile(fp)) {
+		error = EINVAL;
+		goto out;
+	}
+
+	obj = EBPF_OBJ(fp);
+	if (obj->type != EBPF_OBJ_TYPE_PROG) {
+		error = EINVAL;
+		goto out;
+	}
+
+	prog = ebpf_obj_container_of(obj);
+
+	*fp_out = fp;
+	if (prog_out) {
+		*prog_out = &prog->prog;
+	}
+
+	return (0);
+
+out:
+	if (fp != NULL) {
+		ebpf_fdrop(fp, td);
+	}
+
+	return (error);
+}
 
 int
 ebpf_probe_copyinstr(struct ebpf_vm_state *s, const void *uaddr, void *kaddr, size_t len, size_t *done)

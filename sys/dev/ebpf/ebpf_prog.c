@@ -66,12 +66,62 @@ ebpf_prog_init(struct ebpf_prog *prog_obj, struct ebpf_prog_attr *attr)
 	return 0;
 }
 
+int
+ebpf_prog_alloc_vm(struct ebpf_prog *prog_obj)
+{
+	struct ebpf_vm *vm;
+	int error;
+
+	vm = ebpf_create();
+	if (vm == NULL) {
+		error = ENOMEM;
+		goto fail;
+	}
+
+	prog_obj->vm = vm;
+
+	error = ebpf_prog_init_vm(prog_obj, vm);
+	if (error != 0) {
+		goto fail;
+	}
+
+	error = ebpf_load(vm, prog_obj->prog, prog_obj->prog_len);
+	if (error < 0) {
+		error = EINVAL;
+		goto fail;
+	}
+
+#if 0
+	if (jit) {
+		ebpf_jit_fn fn = ebpf_compile(vm);
+		if (fn == NULL) {
+			error = EINVAL;
+			goto fail;
+		}
+	}
+#endif
+	return (0);
+
+fail:
+	if (vm != NULL) {
+		ebpf_destroy(vm);
+		prog_obj->vm = NULL;
+	}
+
+	prog_obj->deinit = NULL;
+
+	return (error);
+}
+
 void
 ebpf_prog_deinit_default(struct ebpf_prog *prog_obj, void *arg)
 {
 	printf("Deinit prog: probe=%p\n", prog_obj->probe);
 	if (prog_obj->probe != NULL) {
 		ebpf_probe_detach(prog_obj->probe);
+	}
+	if (prog_obj->vm != NULL) {
+		ebpf_destroy(prog_obj->vm);
 	}
 	ebpf_free(prog_obj->prog);
 }

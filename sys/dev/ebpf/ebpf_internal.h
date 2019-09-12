@@ -55,6 +55,8 @@ unsigned int ebpf_lookup_registered_function(struct ebpf_vm *vm,
 bool ebpf_validate(const struct ebpf_vm *vm, const struct ebpf_inst *insts,
 		   uint32_t num_insts);
 
+int ebpf_fd_to_program(ebpf_thread *td, int fd, ebpf_file **fp, struct ebpf_prog **prog);
+
 struct ebpf_probe_state;
 
 int ebpf_probe_attach(struct ebpf_probe *probe, struct ebpf_prog *prog, int jit);

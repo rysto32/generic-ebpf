@@ -193,6 +193,14 @@ ebpf_ioc_load_prog(union ebpf_req *req, ebpf_thread *td)
 		return error;
 	}
 
+	error = ebpf_prog_alloc_vm(&prog->prog);
+	if (error != 0) {
+		ebpf_prog_deinit(&prog->prog, td);
+		ebpf_free(insts);
+		ebpf_free(prog);
+		return error;
+	}
+
 	int fd;
 	ebpf_file *f;
 
