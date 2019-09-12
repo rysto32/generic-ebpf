@@ -17,6 +17,7 @@
  */
 
 #include "ebpf_map.h"
+#include <sys/ebpf_vm.h>
 
 #include <dev/ebpf_dev/ebpf_dev_platform.h>
 
@@ -290,60 +291,131 @@ array_map_get_next_key(struct ebpf_map *map, int cpu, void *key, void *next_key)
 	return 0;
 }
 
+struct progarray_value
+{
+	struct ebpf_vm *vm;
+	ebpf_file *fp;
+	int fd;
+};
+
 static int
 progarray_map_init(struct ebpf_map *map, struct ebpf_map_attr *attr)
 {
+	int error;
+	uint32_t orig_size;
 
 	if (attr->value_size != sizeof(int)) {
 		return (EINVAL);
 	}
 
-	return array_map_init(map, attr);
+	orig_size = attr->value_size;
+	attr->value_size = sizeof(struct progarray_value);
+
+	error = array_map_init(map, attr);
+
+	attr->value_size = orig_size;
+	return (error);
 }
 
 static int
+progarray_map_update_elem(struct ebpf_map *map, int cpu, void *key,
+    void *fd_ptr, uint64_t flags)
+{
+	return (EINVAL);
+}
+
+
+static int
 progarray_map_update_elem_from_user(struct ebpf_map *map, int cpu, void *key,
-    void *value, uint64_t flags)
+    void *fd_ptr, uint64_t flags)
 {
 	int error;
-	int fd;
-	ebpf_file *fp;
+	struct progarray_value *old;
+	struct progarray_value value;
 	struct ebpf_map_array *array_map;
 	struct ebpf_obj *obj;
+	struct ebpf_obj_prog *prog;
 	ebpf_thread *td;
 
+	/* Ensure we don't leak stack contents via structure padding. */
+	bzero(&value, sizeof(value));
+
 	array_map = map->data;
-	error = array_map_update_check_attr(map, key, value, flags);
+	error = array_map_update_check_attr(map, key, fd_ptr, flags);
 	if (error != 0) {
 		return error;
 	}
 
+	old = array_map_lookup_elem(map, cpu, key);
+	if (old->fp != NULL) {
+		return (EROFS);
+	}
+
 	td = ebpf_curthread();
-	fd = *(int*)value;
-	error = ebpf_fget(td, fd, &fp);
+	value.fd = *(int*)fd_ptr;
+
+	error = ebpf_fget(td, value.fd, &value.fp);
 	if (error != 0) {
 		return (error);
 	}
 
-	obj = ebpf_objfile_get_container(fp);
+	obj = ebpf_objfile_get_container(value.fp);
 	if (obj == NULL) {
 		error = EINVAL;
-		goto out;
+		goto fail;
 	}
 
 	if (obj->type != EBPF_OBJ_TYPE_PROG) {
 		error = EINVAL;
-		goto out;
+		goto fail;
 	}
 
-	error = array_map_update_elem_common(map, array_map, *(uint32_t *)key,
-					    value, flags);
-out:
-	if (fp != NULL) {
-		ebpf_fdrop(fp, td);
+	prog = ebpf_obj_container_of(obj);
+
+	value.vm = ebpf_create();
+	if (value.vm == NULL) {
+		error = ENOMEM;
+		goto fail;
+	}
+
+	error = ebpf_prog_init_vm(&prog->prog, value.vm);
+	if (error != 0) {
+		goto fail;
+	}
+
+	error = ebpf_load(value.vm, prog->prog.prog, prog->prog.prog_len);
+	if (error < 0) {
+		error = EINVAL;
+		goto fail;
+	}
+
+	return (array_map_update_elem_common(map, array_map, *(uint32_t *)key,
+					    &value, flags));
+fail:
+	if (value.vm != NULL) {
+		ebpf_destroy(value.vm);
+	}
+
+	if (value.fp != NULL) {
+		ebpf_fdrop(value.fp, td);
 	}
 
 	return (error);
+}
+
+static int
+progarray_map_lookup_from_user(struct ebpf_map *map, int cpu, void *key, void *output)
+{
+	struct progarray_value *value;
+
+	value = array_map_lookup_elem(map, cpu, key);
+	if (value == NULL) {
+		return (EINVAL);
+	}
+
+	memcpy(output, &value->fd, sizeof(value->fd));
+
+	return 0;
 }
 
 struct ebpf_map_type array_map_type = {
@@ -380,11 +452,11 @@ struct ebpf_map_type progarray_map_type = {
 	.name = "progarray_map_init",
 	.ops = {
 		.init = progarray_map_init,
-		.update_elem = array_map_update_elem,
+		.update_elem = progarray_map_update_elem,
 		.lookup_elem = array_map_lookup_elem,
 		.delete_elem = array_map_delete_elem,
-		.update_elem_from_user = progarray_map_update_elem_from_user,
-		.lookup_elem_from_user = array_map_lookup_elem_from_user,
+		.update_elem_from_user = progarray_map_update_elem,
+		.lookup_elem_from_user = progarray_map_lookup_from_user,
 		.delete_elem_from_user = array_map_delete_elem,
 		.get_next_key_from_user = array_map_get_next_key,
 		.deinit = array_map_deinit
