@@ -31,7 +31,10 @@ struct ebpf_prog;
 struct ebpf_probe;
 
 struct ebpf_inst;
-typedef uint64_t (*ext_func)(uint64_t arg0, uint64_t arg1, uint64_t arg2,
+
+struct ebpf_vm_state;
+
+typedef uint64_t (*ext_func)(struct ebpf_vm_state *, uint64_t arg0, uint64_t arg1, uint64_t arg2,
 			     uint64_t arg3, uint64_t arg4);
 
 struct ebpf_vm {
@@ -55,15 +58,21 @@ void ebpf_probe_detach(struct ebpf_probe_state *state);
 int ebpf_fire(struct ebpf_probe *probe, uintptr_t arg0, uintptr_t arg1,
     uintptr_t arg2, uintptr_t arg3, uintptr_t arg4, uintptr_t arg5);
 
-int ebpf_probe_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done);
-int ebpf_probe_copyout(const void *kaddr, void *uaddr, size_t len);
-int ebpf_probe_dup(int fd);
-int ebpf_probe_openat(int fd, const char * path, int flags, int mode);
-int ebpf_probe_fstat(int fd, struct stat *sb);
-int ebpf_probe_fstatat(int fd, const char *path, struct stat *sb, int flag);
-int ebpf_probe_faccessat(int fd, const char *path, int mode, int flag);
-int ebpf_probe_set_errno(int error);
-int ebpf_probe_set_syscall_retval(int ret0, int ret1);
-pid_t ebpf_probe_pdfork(int *fd, int flags);
-int ebpf_probe_pdwait4_nohang(int fd, int* status, int options, struct rusage *ru);
+int ebpf_probe_copyinstr(struct ebpf_vm_state *, const void *uaddr, void *kaddr,
+size_t len, size_t *done);
+int ebpf_probe_copyout(struct ebpf_vm_state *, const void *kaddr, void *uaddr,
+    size_t len);
+int ebpf_probe_dup(struct ebpf_vm_state *, int fd);
+int ebpf_probe_openat(struct ebpf_vm_state *, int fd, const char * path,
+    int flags, int mode);
+int ebpf_probe_fstat(struct ebpf_vm_state *, int fd, struct stat *sb);
+int ebpf_probe_fstatat(struct ebpf_vm_state *, int fd, const char *path,
+    struct stat *sb, int flag);
+int ebpf_probe_faccessat(struct ebpf_vm_state *, int fd, const char *path,
+    int mode, int flag);
+int ebpf_probe_set_errno(struct ebpf_vm_state *, int error);
+int ebpf_probe_set_syscall_retval(struct ebpf_vm_state *, int ret0, int ret1);
+pid_t ebpf_probe_pdfork(struct ebpf_vm_state *, int *fd, int flags);
+int ebpf_probe_pdwait4_nohang(struct ebpf_vm_state *, int fd, int* status,
+    int options, struct rusage *ru);
 

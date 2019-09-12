@@ -37,6 +37,7 @@ ebpf_run_test(struct ebpf_inst *prog, uint32_t prog_len,
 		void *ctx, uint32_t ctx_len, bool jit, uint64_t *result)
 {
 	int error = 0;
+	struct ebpf_vm_state state;
 
 	/*
 	 * ctx == NULL is valid, because it is possible to write
@@ -66,9 +67,9 @@ ebpf_run_test(struct ebpf_inst *prog, uint32_t prog_len,
 			error = EINVAL;
 			goto err0;
 		}
-		*result = ebpf_exec_jit(vm, ctx, ctx_len);
+		*result = ebpf_exec_jit(vm, &state, ctx, ctx_len);
 	} else {
-		*result = ebpf_exec(vm, ctx, ctx_len);
+		*result = ebpf_exec(vm, &state, ctx, ctx_len);
 	}
 
 err0:

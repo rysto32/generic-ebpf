@@ -67,7 +67,7 @@ ebpf_map_init(struct ebpf_map *map, struct ebpf_map_attr *attr)
 }
 
 void *
-ebpf_map_lookup_elem(struct ebpf_map *map, void *key)
+ebpf_map_lookup_elem(struct ebpf_vm_state *s, struct ebpf_map *map, void *key)
 {
 	if (map == NULL || key == NULL) {
 		return NULL;
@@ -77,7 +77,7 @@ ebpf_map_lookup_elem(struct ebpf_map *map, void *key)
 }
 
 void *
-ebpf_map_path_lookup(struct ebpf_map *map, void **key)
+ebpf_map_path_lookup(struct ebpf_vm_state *s, struct ebpf_map *map, void **key)
 {
 	const struct ebpf_map_ops *ops;
 	//XXX needs to be dynamically allocated
@@ -146,8 +146,8 @@ ebpf_map_lookup_elem_from_user(struct ebpf_map *map, void *key, void *value)
 }
 
 int
-ebpf_map_update_elem(struct ebpf_map *map, void *key, void *value,
-		     uint64_t flags)
+ebpf_map_update_elem(struct ebpf_vm_state *s, struct ebpf_map *map, void *key,
+    void *value, uint64_t flags)
 {
 	if (map == NULL || key == NULL ||
 			value == NULL || flags > EBPF_EXIST) {
@@ -171,7 +171,7 @@ ebpf_map_update_elem_from_user(struct ebpf_map *map, void *key, void *value,
 }
 
 int
-ebpf_map_delete_elem(struct ebpf_map *map, void *key)
+ebpf_map_delete_elem(struct ebpf_vm_state *s, struct ebpf_map *map, void *key)
 {
 	if (map == NULL || key == NULL) {
 		return EINVAL;

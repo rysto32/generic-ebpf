@@ -147,7 +147,8 @@ uint32(uint64_t x)
 }
 
 uint64_t
-ebpf_exec(const struct ebpf_vm *vm, void *mem, size_t mem_len)
+ebpf_exec(const struct ebpf_vm *vm, struct ebpf_vm_state *state, void *mem,
+    size_t mem_len)
 {
 	uint16_t pc = 0;
 	const struct ebpf_inst *insts;
@@ -564,8 +565,8 @@ ebpf_exec(const struct ebpf_vm *vm, void *mem, size_t mem_len)
 		case EBPF_OP_EXIT:
 			return reg[0];
 		case EBPF_OP_CALL:
-			reg[0] = vm->ext_funcs[inst.imm](reg[1], reg[2], reg[3],
-							 reg[4], reg[5]);
+			reg[0] = vm->ext_funcs[inst.imm](state, reg[1], reg[2],
+							 reg[3], reg[4], reg[5]);
 			break;
 		default:
 			ebpf_error("Unknown instruction!\n");
@@ -575,15 +576,20 @@ ebpf_exec(const struct ebpf_vm *vm, void *mem, size_t mem_len)
 }
 
 uint64_t
-ebpf_exec_jit(const struct ebpf_vm *vm, void *mem, size_t mem_len)
+ebpf_exec_jit(const struct ebpf_vm *vm, struct ebpf_vm_state *state, void *mem,
+    size_t mem_len)
 {
 	if (vm == NULL) {
 		return UINT64_MAX;
 	}
 
+#if 0
 	if (vm->jitted != NULL) {
 		return vm->jitted(mem, mem_len);
 	} else {
 		return UINT64_MAX;
 	}
+#else
+	return ebpf_exec(vm, state, mem, mem_len);
+#endif
 }

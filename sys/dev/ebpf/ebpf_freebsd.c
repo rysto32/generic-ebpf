@@ -216,7 +216,7 @@ ebpf_deinit(void)
 
 
 int
-ebpf_probe_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
+ebpf_probe_copyinstr(struct ebpf_vm_state *s, const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
 	int error;
 
@@ -227,7 +227,7 @@ ebpf_probe_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 }
 
 int
-ebpf_probe_copyout(const void *kaddr, void *uaddr, size_t len)
+ebpf_probe_copyout(struct ebpf_vm_state *s, const void *kaddr, void *uaddr, size_t len)
 {
 	int error;
 
@@ -238,7 +238,7 @@ ebpf_probe_copyout(const void *kaddr, void *uaddr, size_t len)
 }
 
 int
-ebpf_probe_dup(int fd)
+ebpf_probe_dup(struct ebpf_vm_state *s, int fd)
 {
 	struct thread *td;
 	int error;
@@ -252,7 +252,7 @@ ebpf_probe_dup(int fd)
 }
 
 int
-ebpf_probe_openat(int fd, const char * path, int flags, int mode)
+ebpf_probe_openat(struct ebpf_vm_state *s, int fd, const char * path, int flags, int mode)
 {
 	struct thread *td;
 	int error;
@@ -266,7 +266,7 @@ ebpf_probe_openat(int fd, const char * path, int flags, int mode)
 }
 
 int
-ebpf_probe_fstatat(int fd, const char *path, struct stat *sb, int flag)
+ebpf_probe_fstatat(struct ebpf_vm_state *s, int fd, const char *path, struct stat *sb, int flag)
 {
 	struct thread *td;
 	int error;
@@ -280,7 +280,7 @@ ebpf_probe_fstatat(int fd, const char *path, struct stat *sb, int flag)
 }
 
 int
-ebpf_probe_fstat(int fd, struct stat *sb)
+ebpf_probe_fstat(struct ebpf_vm_state *s, int fd, struct stat *sb)
 {
 	struct thread *td;
 	int error;
@@ -294,7 +294,7 @@ ebpf_probe_fstat(int fd, struct stat *sb)
 }
 
 int
-ebpf_probe_faccessat(int fd, const char *path, int mode, int flag)
+ebpf_probe_faccessat(struct ebpf_vm_state *s, int fd, const char *path, int mode, int flag)
 {
 	struct thread *td;
 	int error;
@@ -307,7 +307,7 @@ ebpf_probe_faccessat(int fd, const char *path, int mode, int flag)
 }
 
 int
-ebpf_probe_set_errno(int error)
+ebpf_probe_set_errno(struct ebpf_vm_state *s, int error)
 {
 
 	curthread->td_errno = error;
@@ -315,7 +315,7 @@ ebpf_probe_set_errno(int error)
 }
 
 int
-ebpf_probe_set_syscall_retval(int ret0, int ret1)
+ebpf_probe_set_syscall_retval(struct ebpf_vm_state *s, int ret0, int ret1)
 {
 	struct thread *td;
 
@@ -327,7 +327,7 @@ ebpf_probe_set_syscall_retval(int ret0, int ret1)
 
 
 pid_t
-ebpf_probe_pdfork(int *fd, int flags)
+ebpf_probe_pdfork(struct ebpf_vm_state *s, int *fd, int flags)
 {
 	struct thread *td;
 	struct fork_req fr;
@@ -351,7 +351,7 @@ ebpf_probe_pdfork(int *fd, int flags)
 }
 
 int
-ebpf_probe_pdwait4_nohang(int fd, int* status, int options, struct rusage *ru)
+ebpf_probe_pdwait4_nohang(struct ebpf_vm_state *s, int fd, int* status, int options, struct rusage *ru)
 {
 	int error;
 	struct thread *td;

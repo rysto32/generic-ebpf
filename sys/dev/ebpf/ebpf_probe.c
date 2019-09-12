@@ -103,14 +103,15 @@ ebpf_fire(struct ebpf_probe *probe, uintptr_t arg0, uintptr_t arg1,
     uintptr_t arg2, uintptr_t arg3, uintptr_t arg4, uintptr_t arg5)
 {
 	struct ebpf_probe_state *state;
+	struct ebpf_vm_state vm_state;
 
 	state = probe->module_state;
 	if (state == NULL)
 		return (EBPF_ACTION_CONTINUE);
 
 	if (state->jit) {
-		return ebpf_exec_jit(state->vm, (void*)arg0, arg1);
+		return ebpf_exec_jit(state->vm, &vm_state, (void*)arg0, arg1);
 	} else {
-		return ebpf_exec(state->vm, (void*)arg0, arg1);
+		return ebpf_exec(state->vm, &vm_state, (void*)arg0, arg1);
 	}
 }
