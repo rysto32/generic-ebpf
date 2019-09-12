@@ -647,6 +647,11 @@ ebpf_attach(union ebpf_req *req, ebpf_thread *td)
 		goto err0;
 	}
 
+	if (prog_obj->obj.type != EBPF_OBJ_TYPE_PROG) {
+		error = EINVAL;
+		goto err0;
+	}
+
 	ebpf_probe_attach(probe, &prog_obj->prog, attach->jit);
 	error = 0;
 
