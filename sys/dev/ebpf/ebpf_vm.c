@@ -51,6 +51,10 @@ ebpf_destroy(struct ebpf_vm *vm)
 		return;
 	}
 
+	if (vm->progtype_deinit != NULL) {
+		vm->progtype_deinit(vm);
+	}
+
 	if (vm->jitted != NULL) {
 		ebpf_exfree(vm->jitted, vm->jitted_size);
 	}

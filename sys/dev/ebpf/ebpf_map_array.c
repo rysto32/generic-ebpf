@@ -125,7 +125,7 @@ err0:
 }
 
 static void *
-array_map_lookup_elem(struct ebpf_map *map, void *key)
+array_map_lookup_elem(struct ebpf_map *map, int cpu, void *key)
 {
 	uint32_t k = *(uint32_t *)key;
 
@@ -137,7 +137,7 @@ array_map_lookup_elem(struct ebpf_map *map, void *key)
 }
 
 static int
-array_map_lookup_elem_from_user(struct ebpf_map *map, void *key, void *value)
+array_map_lookup_elem_from_user(struct ebpf_map *map, int cpu, void *key, void *value)
 {
 	uint32_t k = *(uint32_t *)key;
 
@@ -153,7 +153,7 @@ array_map_lookup_elem_from_user(struct ebpf_map *map, void *key, void *value)
 }
 
 static void *
-array_map_lookup_elem_percpu(struct ebpf_map *map, void *key)
+array_map_lookup_elem_percpu(struct ebpf_map *map, int cpu, void *key)
 {
 	uint32_t k = *(uint32_t *)key;
 
@@ -161,12 +161,12 @@ array_map_lookup_elem_percpu(struct ebpf_map *map, void *key)
 		return NULL;
 	}
 
-	return (uint8_t *)((ARRAY_MAP(map) + ebpf_curcpu())->array) +
+	return (uint8_t *)((ARRAY_MAP(map) + cpu)->array) +
 	       (map->value_size * k);
 }
 
 static int
-array_map_lookup_elem_percpu_from_user(struct ebpf_map *map, void *key,
+array_map_lookup_elem_percpu_from_user(struct ebpf_map *map, int cpu, void *key,
 				       void *value)
 {
 	uint32_t k = *(uint32_t *)key;
@@ -214,7 +214,7 @@ array_map_update_check_attr(struct ebpf_map *map, void *key, void *value,
 }
 
 static int
-array_map_update_elem(struct ebpf_map *map, void *key, void *value,
+array_map_update_elem(struct ebpf_map *map, int cpu, void *key, void *value,
 		      uint64_t flags)
 {
 	int error;
@@ -230,7 +230,7 @@ array_map_update_elem(struct ebpf_map *map, void *key, void *value,
 }
 
 static int
-array_map_update_elem_percpu(struct ebpf_map *map, void *key, void *value,
+array_map_update_elem_percpu(struct ebpf_map *map, int cpu, void *key, void *value,
 			     uint64_t flags)
 {
 	int error;
@@ -241,12 +241,12 @@ array_map_update_elem_percpu(struct ebpf_map *map, void *key, void *value,
 		return error;
 	}
 
-	return array_map_update_elem_common(map, array_map + ebpf_curcpu(),
+	return array_map_update_elem_common(map, array_map + cpu,
 					    *(uint32_t *)key, value, flags);
 }
 
 static int
-array_map_update_elem_percpu_from_user(struct ebpf_map *map, void *key,
+array_map_update_elem_percpu_from_user(struct ebpf_map *map, int cpu, void *key,
 				       void *value, uint64_t flags)
 {
 	int error;
@@ -266,13 +266,13 @@ array_map_update_elem_percpu_from_user(struct ebpf_map *map, void *key,
 }
 
 static int
-array_map_delete_elem(struct ebpf_map *map, void *key)
+array_map_delete_elem(struct ebpf_map *map, int cpu, void *key)
 {
 	return EINVAL;
 }
 
 static int
-array_map_get_next_key(struct ebpf_map *map, void *key, void *next_key)
+array_map_get_next_key(struct ebpf_map *map, int cpu, void *key, void *next_key)
 {
 	uint32_t k = key ? *(uint32_t *)key : UINT32_MAX;
 	uint32_t *nk = (uint32_t *)next_key;
@@ -301,10 +301,8 @@ progarray_map_init(struct ebpf_map *map, struct ebpf_map_attr *attr)
 	return array_map_init(map, attr);
 }
 
-
-
 static int
-progarray_map_update_elem_from_user(struct ebpf_map *map, void *key,
+progarray_map_update_elem_from_user(struct ebpf_map *map, int cpu, void *key,
     void *value, uint64_t flags)
 {
 	int error;

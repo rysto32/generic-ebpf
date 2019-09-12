@@ -20,6 +20,7 @@
 #pragma once
 
 #include "ebpf_platform.h"
+#include "ebpf_prog.h"
 #include <sys/ebpf_vm.h>
 #include <sys/ebpf_inst.h>
 
@@ -44,6 +45,9 @@ struct ebpf_vm {
 	size_t jitted_size;
 	ext_func *ext_funcs;
 	const char **ext_func_names;
+
+	ebpf_vm_deinit progtype_deinit;
+	void *progtype_state;
 };
 
 unsigned int ebpf_lookup_registered_function(struct ebpf_vm *vm,

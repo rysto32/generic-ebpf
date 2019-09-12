@@ -25,6 +25,7 @@ struct ebpf_probe_state
 {
 	struct ebpf_probe *probe;
 	struct ebpf_vm *vm;
+	struct ebpf_prog *prog;
 	int jit;
 };
 
@@ -46,7 +47,10 @@ ebpf_probe_attach(struct ebpf_probe *probe, struct ebpf_prog *prog, int jit)
 	}
 
 	state->vm = vm;
-	ebpf_prog_init_vm(prog, vm);
+	error = ebpf_prog_init_vm(prog, vm);
+	if (error != 0) {
+		goto fail;
+	}
 
 	error = ebpf_load(vm, prog->prog, prog->prog_len);
 	if (error < 0) {
@@ -64,6 +68,7 @@ ebpf_probe_attach(struct ebpf_probe *probe, struct ebpf_prog *prog, int jit)
 
 	state->jit = jit;
 	state->probe = probe;
+	state->prog = prog;
 
 	// XXX we need locking here to deal with close() racing with attach()
 	probe->module_state = state;
@@ -104,14 +109,25 @@ ebpf_fire(struct ebpf_probe *probe, uintptr_t arg0, uintptr_t arg1,
 {
 	struct ebpf_probe_state *state;
 	struct ebpf_vm_state vm_state;
+	int error, ret;
 
 	state = probe->module_state;
 	if (state == NULL)
 		return (EBPF_ACTION_CONTINUE);
 
-	if (state->jit) {
-		return ebpf_exec_jit(state->vm, &vm_state, (void*)arg0, arg1);
-	} else {
-		return ebpf_exec(state->vm, &vm_state, (void*)arg0, arg1);
+	error = ebpf_prog_reserve_cpu(state->prog, state->vm, &vm_state);
+	if (error != 0) {
+		ebpf_probe_set_errno(&vm_state, error);
+		return (EBPF_ACTION_RETURN);
 	}
+
+	if (state->jit) {
+		ret = ebpf_exec_jit(state->vm, &vm_state, (void*)arg0, arg1);
+	} else {
+		ret = ebpf_exec(state->vm, &vm_state, (void*)arg0, arg1);
+	}
+
+	ebpf_prog_release_cpu(state->prog, state->vm, &vm_state);
+
+	return (ret);
 }

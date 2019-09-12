@@ -33,13 +33,13 @@ struct ebpf_map_attr {
 };
 
 typedef int ebpf_map_init_t(struct ebpf_map *map, struct ebpf_map_attr *attr);
-typedef void *ebpf_map_lookup_elem_t(struct ebpf_map *map, void *key);
-typedef int ebpf_map_lookup_elem_from_user_t(struct ebpf_map *map, void *key,
+typedef void *ebpf_map_lookup_elem_t(struct ebpf_map *map, int cpu, void *key);
+typedef int ebpf_map_lookup_elem_from_user_t(struct ebpf_map *map, int cpu, void *key,
 					     void *value);
-typedef int ebpf_map_update_elem_t(struct ebpf_map *map, void *key, void *value,
+typedef int ebpf_map_update_elem_t(struct ebpf_map *map, int cpu, void *key, void *value,
 				   uint64_t flags);
-typedef int ebpf_map_delete_elem_t(struct ebpf_map *map, void *key);
-typedef int ebpf_map_get_next_key_t(struct ebpf_map *map, void *key,
+typedef int ebpf_map_delete_elem_t(struct ebpf_map *map, int cpu, void *key);
+typedef int ebpf_map_get_next_key_t(struct ebpf_map *map, int cpu, void *key,
 				    void *next_key);
 typedef void ebpf_map_deinit_t(struct ebpf_map *map, void *arg);
 

@@ -23,7 +23,7 @@ struct ebpf_vm;
 
 struct ebpf_vm_state
 {
-
+	int cpu;
 };
 
 typedef uint64_t (*ebpf_jit_fn)(void *mem, size_t mem_len);

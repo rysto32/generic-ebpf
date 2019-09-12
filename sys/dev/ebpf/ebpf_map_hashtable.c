@@ -52,8 +52,8 @@ struct ebpf_map_hashtable {
 #define HASH_ELEM_PERCPU_VALUE(_hash_mapp, _elemp, _cpuid)                     \
 	(*((uint8_t **)HASH_ELEM_VALUE(_hash_mapp, _elemp)) +                  \
 	 (_hash_mapp)->value_size * (_cpuid))
-#define HASH_ELEM_CURCPU_VALUE(_hash_mapp, _elemp)                             \
-	HASH_ELEM_PERCPU_VALUE(_hash_mapp, _elemp, ebpf_curcpu())
+#define HASH_ELEM_CURCPU_VALUE(_hash_mapp, _elemp, cpu)                        \
+	HASH_ELEM_PERCPU_VALUE(_hash_mapp, _elemp, (cpu))
 #define HASH_BUCKET_LOCK(_bucketp) ebpf_spinmtx_lock(&_bucketp->lock);
 #define HASH_BUCKET_UNLOCK(_bucketp) ebpf_spinmtx_unlock(&_bucketp->lock);
 
@@ -77,11 +77,11 @@ get_hash_elem(struct hash_bucket *bucket, void *key, uint32_t key_size)
 }
 
 static struct hash_elem *
-get_extra_elem(struct ebpf_map_hashtable *hash_map, struct hash_elem *elem)
+get_extra_elem(struct ebpf_map_hashtable *hash_map, struct hash_elem *elem, int cpu)
 {
 	struct hash_elem *tmp;
-	tmp = hash_map->pcpu_extra_elems[ebpf_curcpu()];
-	hash_map->pcpu_extra_elems[ebpf_curcpu()] = elem;
+	tmp = hash_map->pcpu_extra_elems[cpu];
+	hash_map->pcpu_extra_elems[cpu] = elem;
 	return tmp;
 }
 
@@ -295,7 +295,7 @@ hashtable_map_deinit(struct ebpf_map *map, void *arg)
 }
 
 static void *
-hashtable_map_lookup_elem(struct ebpf_map *map, void *key)
+hashtable_map_lookup_elem(struct ebpf_map *map, int cpu, void *key)
 {
 	uint32_t hash = ebpf_jenkins_hash(key, map->key_size, 0);
 	struct ebpf_map_hashtable *hash_map;
@@ -309,12 +309,12 @@ hashtable_map_lookup_elem(struct ebpf_map *map, void *key)
 		return NULL;
 	}
 
-	return map->percpu ? HASH_ELEM_CURCPU_VALUE(hash_map, elem)
+	return map->percpu ? HASH_ELEM_CURCPU_VALUE(hash_map, elem, cpu)
 			   : HASH_ELEM_VALUE(hash_map, elem);
 }
 
 static int
-hashtable_map_lookup_elem_from_user(struct ebpf_map *map, void *key,
+hashtable_map_lookup_elem_from_user(struct ebpf_map *map, int cpu, void *key,
 				    void *value)
 {
 	uint32_t hash = ebpf_jenkins_hash(key, map->key_size, 0);
@@ -335,7 +335,7 @@ hashtable_map_lookup_elem_from_user(struct ebpf_map *map, void *key,
 }
 
 static int
-hashtable_map_lookup_elem_percpu_from_user(struct ebpf_map *map, void *key,
+hashtable_map_lookup_elem_percpu_from_user(struct ebpf_map *map, int cpu, void *key,
 					   void *value)
 {
 	uint32_t hash = ebpf_jenkins_hash(key, map->key_size, 0);
@@ -360,7 +360,7 @@ hashtable_map_lookup_elem_percpu_from_user(struct ebpf_map *map, void *key,
 }
 
 static int
-hashtable_map_update_elem(struct ebpf_map *map, void *key, void *value,
+hashtable_map_update_elem(struct ebpf_map *map, int cpu, void *key, void *value,
 			  uint64_t flags)
 {
 	int error = 0;
@@ -385,7 +385,7 @@ hashtable_map_update_elem(struct ebpf_map *map, void *key, void *value,
 		 * use percpu extra elements and swap it with old
 		 * element. This avoids take lock of memory allocator.
 		 */
-		new_elem = get_extra_elem(hash_map, old_elem);
+		new_elem = get_extra_elem(hash_map, old_elem, cpu);
 	} else {
 		new_elem = ebpf_allocator_alloc(&hash_map->allocator);
 		if (!new_elem) {
@@ -408,7 +408,7 @@ err0:
 }
 
 static int
-hashtable_map_update_elem_percpu(struct ebpf_map *map, void *key, void *value,
+hashtable_map_update_elem_percpu(struct ebpf_map *map, int cpu, void *key, void *value,
 				 uint64_t flags)
 {
 	int error = 0;
@@ -428,7 +428,7 @@ hashtable_map_update_elem_percpu(struct ebpf_map *map, void *key, void *value,
 	}
 
 	if (old_elem != NULL) {
-		memcpy(HASH_ELEM_CURCPU_VALUE(hash_map, old_elem), value,
+		memcpy(HASH_ELEM_CURCPU_VALUE(hash_map, old_elem, cpu), value,
 		       map->value_size);
 	} else {
 		new_elem = ebpf_allocator_alloc(&hash_map->allocator);
@@ -438,7 +438,7 @@ hashtable_map_update_elem_percpu(struct ebpf_map *map, void *key, void *value,
 		}
 
 		memcpy(new_elem->key, key, map->key_size);
-		memcpy(HASH_ELEM_CURCPU_VALUE(hash_map, new_elem), value,
+		memcpy(HASH_ELEM_CURCPU_VALUE(hash_map, new_elem, cpu), value,
 		       map->value_size);
 		EBPF_EPOCH_LIST_INSERT_HEAD(&bucket->head, new_elem, elem);
 	}
@@ -449,7 +449,7 @@ err0:
 }
 
 static int
-hashtable_map_update_elem_percpu_from_user(struct ebpf_map *map, void *key,
+hashtable_map_update_elem_percpu_from_user(struct ebpf_map *map, int cpu, void *key,
 					   void *value, uint64_t flags)
 {
 	int error = 0;
@@ -495,7 +495,7 @@ err0:
 }
 
 static int
-hashtable_map_delete_elem(struct ebpf_map *map, void *key)
+hashtable_map_delete_elem(struct ebpf_map *map, int cpu, void *key)
 {
 	uint32_t hash = ebpf_jenkins_hash(key, map->key_size, 0);
 	struct ebpf_map_hashtable *hash_map = map->data;
@@ -526,7 +526,7 @@ hashtable_map_delete_elem(struct ebpf_map *map, void *key)
 }
 
 static int
-hashtable_map_get_next_key(struct ebpf_map *map, void *key, void *next_key)
+hashtable_map_get_next_key(struct ebpf_map *map, int cpu, void *key, void *next_key)
 {
 	struct ebpf_map_hashtable *hash_map = map->data;
 	struct hash_bucket *bucket;

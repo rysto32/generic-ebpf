@@ -22,6 +22,15 @@
 #include <sys/ebpf_vm.h>
 #include <sys/ebpf_function_idx.h>
 
+#include <sys/sx.h>
+
+struct vfs_vm_state
+{
+	struct sx * cpu_sx;
+};
+
+static void vfs_vm_deinit(struct ebpf_vm *vm);
+
 static void
 vfs_vm_attach_func(struct ebpf_vm *vm)
 {
@@ -47,15 +56,94 @@ vfs_vm_attach_func(struct ebpf_vm *vm)
 	ebpf_register(vm, EBPF_FUNC_pdwait4, "pdwait4_nohang", ebpf_probe_pdwait4_nohang);
 }
 
-static void
+static int
 vfs_vm_init(struct ebpf_vm *vm)
 {
+	struct vfs_vm_state *state;
+	int i, ncpu, error;
 
 	vfs_vm_attach_func(vm);
+
+	state = ebpf_calloc(sizeof(struct vfs_vm_state), 1);
+	if (state == NULL) {
+		return (ENOMEM);
+	}
+
+	ncpu = ebpf_ncpus();
+
+	state->cpu_sx = ebpf_calloc(sizeof(struct sx), ncpu);
+	if (state->cpu_sx == NULL) {
+		error = ENOMEM;
+		goto fail;
+	}
+
+	for (i = 0; i < ncpu; ++i) {
+		sx_init(&state->cpu_sx[i], "ebpf_vfs_cpu_sx");
+	}
+
+	vm->progtype_deinit = vfs_vm_deinit;
+	vm->progtype_state = state;
+	return (0);
+
+fail:
+	ebpf_free(state);
+
+	return (error);
+}
+
+static void
+vfs_vm_deinit(struct ebpf_vm *vm)
+{
+	struct vfs_vm_state *state;
+	int i, ncpu;
+
+	state = vm->progtype_state;
+
+	if (state && state->cpu_sx) {
+		ncpu = ebpf_ncpus();
+
+		for (i = 0; i < ncpu; ++i) {
+			sx_destroy(&state->cpu_sx[i]);
+		}
+
+		ebpf_free(state->cpu_sx);
+	}
+
+	ebpf_free(state);
+	vm->progtype_state = NULL;
+}
+
+static int
+vfs_reserve_cpu(struct ebpf_vm *vm, struct ebpf_vm_state *vm_state)
+{
+	struct vfs_vm_state *state;
+	int c, error;
+
+	state = vm->progtype_state;
+	c = ebpf_curcpu();
+	error = sx_slock_sig(&state->cpu_sx[c]);
+	if (error != 0) {
+		return (error);
+	}
+
+	vm_state->cpu = c;
+	return (0);
+}
+
+static void
+vfs_release_cpu(struct ebpf_vm *vm, struct ebpf_vm_state *vm_state)
+{
+	struct vfs_vm_state *state;
+
+	state = vm->progtype_state;
+	sx_sunlock(&state->cpu_sx[vm_state->cpu]);
 }
 
 struct ebpf_prog_type vfs_prog_type = {
 	.name = "vfs",
 	.type = EBPF_PROG_TYPE_VFS,
 	.vm_init = vfs_vm_init,
+	.vm_deinit = vfs_vm_deinit,
+	.reserve_cpu = vfs_reserve_cpu,
+	.release_cpu = vfs_release_cpu,
 };

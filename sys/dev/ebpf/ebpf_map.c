@@ -17,6 +17,7 @@
  */
 
 #include "ebpf_map.h"
+#include "ebpf_internal.h"
 
 const struct ebpf_map_type *ebpf_map_types[] = {
 	[EBPF_MAP_TYPE_BAD]              = &bad_map_type,
@@ -73,7 +74,7 @@ ebpf_map_lookup_elem(struct ebpf_vm_state *s, struct ebpf_map *map, void *key)
 		return NULL;
 	}
 
-	return EBPF_MAP_TYPE_OPS(map->type).lookup_elem(map, key);
+	return EBPF_MAP_TYPE_OPS(map->type).lookup_elem(map, s->cpu, key);
 }
 
 void *
@@ -99,7 +100,7 @@ ebpf_map_path_lookup(struct ebpf_vm_state *s, struct ebpf_map *map, void **key)
 	absolute = path[0] == '/';
 
 	while (end > 0) {
-		value = ops->lookup_elem(map, path);
+		value = ops->lookup_elem(map, s->cpu, path);
 		if (value != NULL) {
 			goto out;
 		}
@@ -113,7 +114,7 @@ ebpf_map_path_lookup(struct ebpf_vm_state *s, struct ebpf_map *map, void **key)
 
 	if (absolute) {
 		path[0] = '/';
-		value = ops->lookup_elem(map, path);
+		value = ops->lookup_elem(map, s->cpu, path);
 		end = 0;
 	}
 
@@ -139,7 +140,7 @@ ebpf_map_lookup_elem_from_user(struct ebpf_map *map, void *key, void *value)
 	}
 
 	ebpf_epoch_enter();
-	error = EBPF_MAP_TYPE_OPS(map->type).lookup_elem_from_user(map, key, value);
+	error = EBPF_MAP_TYPE_OPS(map->type).lookup_elem_from_user(map, ebpf_curcpu(), key, value);
 	ebpf_epoch_exit();
 
 	return error;
@@ -154,7 +155,7 @@ ebpf_map_update_elem(struct ebpf_vm_state *s, struct ebpf_map *map, void *key,
 		return EINVAL;
 	}
 
-	return EBPF_MAP_TYPE_OPS(map->type).update_elem(map, key, value, flags);
+	return EBPF_MAP_TYPE_OPS(map->type).update_elem(map, s->cpu, key, value, flags);
 }
 
 int
@@ -164,7 +165,7 @@ ebpf_map_update_elem_from_user(struct ebpf_map *map, void *key, void *value,
 	int error;
 
 	ebpf_epoch_enter();
-	error = EBPF_MAP_TYPE_OPS(map->type).update_elem_from_user(map, key, value, flags);
+	error = EBPF_MAP_TYPE_OPS(map->type).update_elem_from_user(map, ebpf_curcpu(), key, value, flags);
 	ebpf_epoch_exit();
 
 	return error;
@@ -177,7 +178,7 @@ ebpf_map_delete_elem(struct ebpf_vm_state *s, struct ebpf_map *map, void *key)
 		return EINVAL;
 	}
 
-	return EBPF_MAP_TYPE_OPS(map->type).delete_elem(map, key);
+	return EBPF_MAP_TYPE_OPS(map->type).delete_elem(map, s->cpu, key);
 }
 
 int
@@ -189,7 +190,7 @@ ebpf_map_delete_elem_from_user(struct ebpf_map *map, void *key)
 	}
 
 	ebpf_epoch_enter();
-	error = EBPF_MAP_TYPE_OPS(map->type).delete_elem_from_user(map, key);
+	error = EBPF_MAP_TYPE_OPS(map->type).delete_elem_from_user(map, ebpf_curcpu(), key);
 	ebpf_epoch_exit();
 
 	return error;
@@ -209,7 +210,7 @@ ebpf_map_get_next_key_from_user(struct ebpf_map *map, void *key, void *next_key)
 	}
 
 	ebpf_epoch_enter();
-	error = EBPF_MAP_TYPE_OPS(map->type).get_next_key_from_user(map, key, next_key);
+	error = EBPF_MAP_TYPE_OPS(map->type).get_next_key_from_user(map, ebpf_curcpu(), key, next_key);
 	ebpf_epoch_exit();
 
 	return error;

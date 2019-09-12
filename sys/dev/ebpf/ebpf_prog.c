@@ -88,11 +88,29 @@ ebpf_prog_deinit(struct ebpf_prog *prog_obj, void *arg)
 	}
 }
 
-void
+int
 ebpf_prog_init_vm(struct ebpf_prog *prog, struct ebpf_vm *vm)
 {
+	int error = 0;
 
 	if (prog->type->vm_init) {
-		prog->type->vm_init(vm);
+		error = prog->type->vm_init(vm);
 	}
+
+	return (error);
+}
+
+int
+ebpf_prog_reserve_cpu(struct ebpf_prog *prog, struct ebpf_vm *vm,
+    struct ebpf_vm_state *vm_state)
+{
+
+	return (prog->type->reserve_cpu(vm, vm_state));
+}
+
+void ebpf_prog_release_cpu(struct ebpf_prog *prog, struct ebpf_vm *vm,
+    struct ebpf_vm_state *vm_state)
+{
+
+	prog->type->release_cpu(vm, vm_state);
 }
