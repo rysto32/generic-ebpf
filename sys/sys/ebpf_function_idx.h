@@ -39,5 +39,6 @@ enum ebpf_common_functions {
 	EBPF_FUNC_fexecve,
 	EBPF_FUNC_memset,
 	EBPF_FUNC_readlinkat,
+	EBPF_FUNC_dummy_unimpl,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };
