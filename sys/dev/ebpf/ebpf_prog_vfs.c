@@ -53,7 +53,8 @@ vfs_vm_attach_func(struct ebpf_vm *vm)
 	ebpf_register(vm, EBPF_FUNC_set_syscall_retval, "set_syscall_retval",
 	    ebpf_probe_set_syscall_retval);
 	ebpf_register(vm, EBPF_FUNC_pdfork, "pdfork", ebpf_probe_pdfork);
-	ebpf_register(vm, EBPF_FUNC_pdwait4, "pdwait4_nohang", ebpf_probe_pdwait4_nohang);
+	ebpf_register(vm, EBPF_FUNC_pdwait4_nohang, "pdwait4_nohang", ebpf_probe_pdwait4_nohang);
+	ebpf_register(vm, EBPF_FUNC_pdwait4_defer, "pdwait4_defer", ebpf_probe_pdwait4_defer);
 }
 
 static int

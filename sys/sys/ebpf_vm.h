@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <sys/resource.h>
 
 struct ebpf_vm;
 struct ebpf_vm_state;

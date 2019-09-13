@@ -30,3 +30,4 @@ static EBPF_FUNC(int, set_errno, int);
 static EBPF_FUNC(int, set_syscall_retval, int, int);
 static EBPF_FUNC(pid_t, pdfork, int *, int);
 static EBPF_FUNC(int, pdwait4_nohang, int, int*, int, struct rusage *);
+static EBPF_FUNC(int, pdwait4_defer, int, int, void *, void *);

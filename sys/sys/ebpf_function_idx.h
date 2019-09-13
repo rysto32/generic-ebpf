@@ -34,6 +34,7 @@ enum ebpf_common_functions {
 	EBPF_FUNC_set_errno,
 	EBPF_FUNC_set_syscall_retval,
 	EBPF_FUNC_pdfork,
-	EBPF_FUNC_pdwait4,
+	EBPF_FUNC_pdwait4_nohang,
+	EBPF_FUNC_pdwait4_defer,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };

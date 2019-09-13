@@ -390,11 +390,22 @@ ebpf_probe_pdfork(struct ebpf_vm_state *s, int *fd, int flags)
 	}
 }
 
-int
-ebpf_probe_pdwait4_nohang(struct ebpf_vm_state *s, int fd, int* status, int options, struct rusage *ru)
+static int
+ebpf_probe_do_pdwait(int fd, int* status, int options, struct rusage *ru)
 {
 	int error;
 	struct thread *td;
+
+	td = curthread;
+	error = kern_pdwait4(td, fd, status, options, ru);
+	td->td_errno = error;
+
+	return (error);
+}
+
+int
+ebpf_probe_pdwait4_nohang(struct ebpf_vm_state *s, int fd, int* status, int options, struct rusage *ru)
+{
 
 	/*
 	 * We cannot block here as the process that we block on could block on
@@ -402,11 +413,49 @@ ebpf_probe_pdwait4_nohang(struct ebpf_vm_state *s, int fd, int* status, int opti
 	 */
 	options |= WNOHANG;
 
-	td = curthread;
-	error = kern_pdwait4(td, fd, status, options, ru);
-	td->td_errno = error;
+	return (ebpf_probe_do_pdwait(fd, status, options, ru));
+}
 
-	return (error);
+static void
+ebpf_probe_do_deferred_pdwait4(struct ebpf_vm_state *s)
+{
+	int error, status;
+
+	error = ebpf_probe_do_pdwait(s->scratch.wait4.fd, &status,
+	    s->scratch.wait4.options, &s->scratch.wait4.rusage);
+
+	s->next_vm_args[0] = (uintptr_t)s->scratch.wait4.arg;
+	s->next_vm_args[1] = error;
+	s->next_vm_args[2] = status;
+	s->next_vm_args[3] = (uintptr_t)&s->scratch.wait4.rusage;
+	s->num_args = 4;
+}
+
+int
+ebpf_probe_pdwait4_defer(struct ebpf_vm_state *s, int fd, int options, void *arg,
+    int *prog_fd)
+{
+	struct ebpf_prog *prog;
+	int error;
+
+	if (prog_fd == NULL) {
+		curthread->td_errno = ENOENT;
+		return ENOENT;
+	}
+
+	error = ebpf_fd_to_program(ebpf_curthread(), *prog_fd, &s->vm_fp, &prog);
+	if (error != 0) {
+		curthread->td_errno = error;
+		return (error);
+	}
+
+	s->scratch.wait4.fd = fd;
+	s->scratch.wait4.options = options;
+	s->scratch.wait4.arg = arg;
+
+	s->next_vm = prog->vm;
+	s->deferred_func = ebpf_probe_do_deferred_pdwait4;
+	return 0;
 }
 
 /*
