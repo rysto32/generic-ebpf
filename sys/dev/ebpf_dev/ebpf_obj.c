@@ -70,13 +70,13 @@ ebpf_obj_delete(struct ebpf_obj *obj, ebpf_thread *td)
 			return;
 		}
 
+		ebpf_prog_deinit(&prog->prog, NULL);
 		for (int i = 0; i < EBPF_PROG_MAX_ATTACHED_MAPS; i++) {
 			if (prog->attached_maps[i] != NULL) {
 				ebpf_fdrop(prog->attached_maps[i]->obj.f, td);
 			}
 		}
 
-		ebpf_prog_deinit(&prog->prog, NULL);
 		ebpf_free(prog);
 	} else if (obj->type == EBPF_OBJ_TYPE_MAP) {
 		struct ebpf_map *map;
