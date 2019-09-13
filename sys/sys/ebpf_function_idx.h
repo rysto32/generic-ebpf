@@ -37,5 +37,6 @@ enum ebpf_common_functions {
 	EBPF_FUNC_pdwait4_nohang,
 	EBPF_FUNC_pdwait4_defer,
 	EBPF_FUNC_fexecve,
+	EBPF_FUNC_memset,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };

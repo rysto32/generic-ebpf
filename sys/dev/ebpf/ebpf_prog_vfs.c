@@ -56,6 +56,7 @@ vfs_vm_attach_func(struct ebpf_vm *vm)
 	ebpf_register(vm, EBPF_FUNC_pdwait4_nohang, "pdwait4_nohang", ebpf_probe_pdwait4_nohang);
 	ebpf_register(vm, EBPF_FUNC_pdwait4_defer, "pdwait4_defer", ebpf_probe_pdwait4_defer);
 	ebpf_register(vm, EBPF_FUNC_fexecve, "fexecve", ebpf_probe_fexecve);
+	ebpf_register(vm, EBPF_FUNC_memset, "memset", ebpf_probe_memset);
 }
 
 static int

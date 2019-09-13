@@ -33,3 +33,4 @@ static EBPF_FUNC(int, pdwait4_nohang, int, int*, int, struct rusage *);
 static EBPF_FUNC(int, pdwait4_defer, int, int, void *, void *);
 static EBPF_FUNC(int, fexecve, int, char *const argv[], char *const envp[],
     const char * argv_prepend[]);
+static EBPF_FUNC(void*, memset, void *, int, size_t);

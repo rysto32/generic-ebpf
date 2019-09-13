@@ -495,6 +495,13 @@ ebpf_probe_fexecve(struct ebpf_vm_state *s, int fd, char ** argv,
 	return (error);
 }
 
+void *
+ebpf_probe_memset(struct ebpf_vm_state *s, void *mem , int c, size_t size)
+{
+
+	return (memset(mem, c, size));
+}
+
 /*
  * Kernel module operations
  */
