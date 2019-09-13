@@ -108,8 +108,6 @@ fail:
 		prog_obj->vm = NULL;
 	}
 
-	prog_obj->deinit = NULL;
-
 	return (error);
 }
 
@@ -120,9 +118,14 @@ ebpf_prog_deinit_default(struct ebpf_prog *prog_obj, void *arg)
 	if (prog_obj->probe != NULL) {
 		ebpf_probe_detach(prog_obj->probe);
 	}
+
 	if (prog_obj->vm != NULL) {
+		if (prog_obj->type->vm_deinit) {
+			prog_obj->type->vm_deinit(prog_obj->vm);
+		}
 		ebpf_destroy(prog_obj->vm);
 	}
+
 	ebpf_free(prog_obj->prog);
 }
 
