@@ -38,5 +38,6 @@ enum ebpf_common_functions {
 	EBPF_FUNC_pdwait4_defer,
 	EBPF_FUNC_fexecve,
 	EBPF_FUNC_memset,
+	EBPF_FUNC_readlinkat,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };

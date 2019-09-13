@@ -495,6 +495,20 @@ ebpf_probe_fexecve(struct ebpf_vm_state *s, int fd, char ** argv,
 	return (error);
 }
 
+int
+ebpf_probe_readlinkat(struct ebpf_vm_state *s, int fd, const char *path,
+    char *buf, size_t bufsize)
+{
+	struct thread *td;
+	int error;
+
+	td = ebpf_curthread();
+	error = kern_readlinkat(td, fd, path, UIO_SYSSPACE, buf, UIO_SYSSPACE, bufsize);
+	td->td_errno = error;
+
+	return (error);
+}
+
 void *
 ebpf_probe_memset(struct ebpf_vm_state *s, void *mem , int c, size_t size)
 {

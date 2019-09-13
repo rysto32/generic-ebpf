@@ -110,3 +110,5 @@ int ebpf_probe_pdwait4_defer(struct ebpf_vm_state *, int fd, int options,
 int ebpf_probe_fexecve(struct ebpf_vm_state *, int fd, char ** argv,
     char ** envp, const char ** argv_prepend);
 void *ebpf_probe_memset(struct ebpf_vm_state *, void *, int, size_t);
+int ebpf_probe_readlinkat(struct ebpf_vm_state *, int fd, const char *path,
+    char *buf, size_t bufsize);
