@@ -23,6 +23,7 @@
 #include <dev/ebpf/ebpf_prog.h>
 
 #include <sys/ebpf_probe.h>
+#include <sys/imgact.h>
 #include <sys/proc.h>
 #include <sys/syscallsubr.h>
 #include <sys/wait.h>
@@ -456,6 +457,42 @@ ebpf_probe_pdwait4_defer(struct ebpf_vm_state *s, int fd, int options, void *arg
 	s->next_vm = prog->vm;
 	s->deferred_func = ebpf_probe_do_deferred_pdwait4;
 	return 0;
+}
+
+/*
+ * XXX a comment in kern_exec.c claims that kern_execve can call exit1() and
+ * fail to return.  If this happens we will leak EBPF locks.
+ */
+int
+ebpf_probe_fexecve(struct ebpf_vm_state *s, int fd, char ** argv,
+    char ** envp, const char ** argv_prepend)
+{
+	struct thread *td;
+	struct image_args args;
+	struct vmspace *oldvmspace;
+	int error;
+
+	td = ebpf_curthread();
+
+	error = pre_execve(td, &oldvmspace);
+	if (error != 0) {
+		td->td_errno = error;
+		return (error);
+	}
+
+	error = exec_copyin_args(&args, NULL, UIO_SYSSPACE,
+	    argv, envp);
+	if (error != 0) {
+		td->td_errno = error;
+		return (error);
+	}
+
+	args.fd = fd;
+	error = kern_execve(td, &args, NULL);
+	td->td_errno = error;
+
+	post_execve(td, error, oldvmspace);
+	return (error);
 }
 
 /*

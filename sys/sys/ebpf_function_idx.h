@@ -36,5 +36,6 @@ enum ebpf_common_functions {
 	EBPF_FUNC_pdfork,
 	EBPF_FUNC_pdwait4_nohang,
 	EBPF_FUNC_pdwait4_defer,
+	EBPF_FUNC_fexecve,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };

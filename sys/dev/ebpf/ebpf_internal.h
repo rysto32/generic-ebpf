@@ -107,4 +107,5 @@ int ebpf_probe_pdwait4_nohang(struct ebpf_vm_state *, int fd, int* status,
     int options, struct rusage *ru);
 int ebpf_probe_pdwait4_defer(struct ebpf_vm_state *, int fd, int options,
     void *arg, int *prog_fd);
-
+int ebpf_probe_fexecve(struct ebpf_vm_state *, int fd, char ** argv,
+    char ** envp, const char ** argv_prepend);
