@@ -131,7 +131,7 @@ err1:
 err0:
 	for (int i = 0; i < EBPF_PROG_MAX_ATTACHED_MAPS; i++) {
 		if (prog_obj->attached_maps[i] != NULL) {
-			ebpf_fdrop(f, td);
+			ebpf_fdrop(prog_obj->attached_maps[i]->obj.f, td);
 			prog_obj->attached_maps[i] = NULL;
 		} else {
 			break;
