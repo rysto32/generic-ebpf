@@ -172,6 +172,8 @@ ebpf_ioc_load_prog(union ebpf_req *req, ebpf_thread *td)
 		return ENOMEM;
 	}
 
+	prog->obj.type = EBPF_OBJ_TYPE_PROG;
+
 	struct ebpf_prog_attr attr = {
 		.type = req->prog_type,
 		.prog = insts,
@@ -187,17 +189,15 @@ ebpf_ioc_load_prog(union ebpf_req *req, ebpf_thread *td)
 
 	error = ebpf_prog_mapfd_to_addr(prog, td);
 	if (error != 0) {
-		ebpf_prog_deinit(&prog->prog, td);
+		ebpf_obj_delete(&prog->obj, td);
 		ebpf_free(insts);
-		ebpf_free(prog);
 		return error;
 	}
 
 	error = ebpf_prog_alloc_vm(&prog->prog);
 	if (error != 0) {
-		ebpf_prog_deinit(&prog->prog, td);
+		ebpf_obj_delete(&prog->obj, td);
 		ebpf_free(insts);
-		ebpf_free(prog);
 		return error;
 	}
 
@@ -206,21 +206,19 @@ ebpf_ioc_load_prog(union ebpf_req *req, ebpf_thread *td)
 
 	error = ebpf_fopen(td, &f, &fd, &prog->obj);
 	if (error != 0) {
-		ebpf_prog_deinit(&prog->prog, td);
+		ebpf_obj_delete(&prog->obj, td);
 		ebpf_free(insts);
-		ebpf_free(prog);
 		return error;
 	}
 
 	prog->obj.f = f;
-	prog->obj.type = EBPF_OBJ_TYPE_PROG;
 
 	// set destructor after object bounded to file
 // 	prog->prog.deinit = ebpf_dev_prog_deinit;
 
 	error = ebpf_copyout(&fd, req->prog_fdp, sizeof(int));
 	if (error != 0) {
-		ebpf_prog_deinit(&prog->prog, td);
+		ebpf_obj_delete(&prog->obj, td);
 		ebpf_free(insts);
 		return error;
 	}
