@@ -88,7 +88,7 @@ ebpf_map_path_lookup(struct ebpf_vm_state *s, struct ebpf_map *map, void **key)
 	int absolute;
 	int end;
 
-	if (map == NULL || key == NULL || map->key_size > sizeof(path)) {
+	if (map == NULL || key == NULL || *key == NULL || map->key_size > sizeof(path)) {
 		return NULL;
 	}
 
