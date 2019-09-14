@@ -108,7 +108,9 @@ int ebpf_probe_pdwait4_nohang(struct ebpf_vm_state *, int fd, int* status,
 int ebpf_probe_pdwait4_defer(struct ebpf_vm_state *, int fd, int options,
     void *arg, int *prog_fd);
 int ebpf_probe_fexecve(struct ebpf_vm_state *, int fd, char ** argv,
-    char ** envp, const char ** argv_prepend);
+    char ** envp, char ** argv_prepend);
 void *ebpf_probe_memset(struct ebpf_vm_state *, void *, int, size_t);
 int ebpf_probe_readlinkat(struct ebpf_vm_state *, int fd, const char *path,
     char *buf, size_t bufsize);
+int ebpf_probe_exec_get_interp(struct ebpf_vm_state *, int fd, char *buf,
+    size_t bufsize, int *type);

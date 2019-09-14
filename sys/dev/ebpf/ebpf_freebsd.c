@@ -23,6 +23,7 @@
 #include <dev/ebpf/ebpf_prog.h>
 
 #include <sys/ebpf_probe.h>
+#include <sys/exec.h>
 #include <sys/imgact.h>
 #include <sys/proc.h>
 #include <sys/syscallsubr.h>
@@ -465,7 +466,7 @@ ebpf_probe_pdwait4_defer(struct ebpf_vm_state *s, int fd, int options, void *arg
  */
 int
 ebpf_probe_fexecve(struct ebpf_vm_state *s, int fd, char ** argv,
-    char ** envp, const char ** argv_prepend)
+    char ** envp, char ** argv_prepend)
 {
 	struct thread *td;
 	struct image_args args;
@@ -480,8 +481,8 @@ ebpf_probe_fexecve(struct ebpf_vm_state *s, int fd, char ** argv,
 		return (error);
 	}
 
-	error = exec_copyin_args(&args, NULL, UIO_SYSSPACE,
-	    argv, envp);
+	error = exec_copyin_args_prepend(&args, NULL, UIO_SYSSPACE,
+	    argv, envp, argv_prepend);
 	if (error != 0) {
 		td->td_errno = error;
 		return (error);
@@ -514,6 +515,20 @@ ebpf_probe_memset(struct ebpf_vm_state *s, void *mem , int c, size_t size)
 {
 
 	return (memset(mem, c, size));
+}
+
+int
+ebpf_probe_exec_get_interp(struct ebpf_vm_state *s, int fd, char *buf,
+    size_t bufsize, int *type)
+{
+	struct thread *td;
+	int error;
+
+	td = ebpf_curthread();
+	error = exec_get_interp(td, fd, buf, bufsize, type);
+	td->td_errno = error;
+
+	return (error);
 }
 
 /*

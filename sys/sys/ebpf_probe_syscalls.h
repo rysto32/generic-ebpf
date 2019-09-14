@@ -32,7 +32,8 @@ static EBPF_FUNC(pid_t, pdfork, int *, int);
 static EBPF_FUNC(int, pdwait4_nohang, int, int*, int, struct rusage *);
 static EBPF_FUNC(int, pdwait4_defer, int, int, void *, void *);
 static EBPF_FUNC(int, fexecve, int, char *const argv[], char *const envp[],
-    const char * argv_prepend[]);
+    char * argv_prepend[]);
 static EBPF_FUNC(void*, memset, void *, int, size_t);
 static EBPF_FUNC(int, readlinkat,int fd, const char *path, char *buf, size_t bufsize);
 static EBPF_FUNC(int, dummy_unimpl, void);
+static EBPF_FUNC(int, exec_get_interp, int fd, char *buf, size_t bufsize, int *type);
