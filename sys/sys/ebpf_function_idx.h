@@ -24,22 +24,22 @@ enum ebpf_common_functions {
 	EBPF_FUNC_ebpf_map_lookup_elem,
 	EBPF_FUNC_ebpf_map_delete_elem,
 	EBPF_FUNC_ebpf_map_lookup_path,
-	EBPF_FUNC_copyinstr,
+	EBPF_FUNC_copyinstr,		/* 5 */
 	EBPF_FUNC_copyout,
 	EBPF_FUNC_dup,
 	EBPF_FUNC_openat,
 	EBPF_FUNC_fstatat,
-	EBPF_FUNC_fstat,
+	EBPF_FUNC_fstat,		/* 10 */
 	EBPF_FUNC_faccessat,
 	EBPF_FUNC_set_errno,
 	EBPF_FUNC_set_syscall_retval,
 	EBPF_FUNC_pdfork,
-	EBPF_FUNC_pdwait4_nohang,
+	EBPF_FUNC_pdwait4_nohang,	/* 15 */
 	EBPF_FUNC_pdwait4_defer,
 	EBPF_FUNC_fexecve,
 	EBPF_FUNC_memset,
 	EBPF_FUNC_readlinkat,
-	EBPF_FUNC_dummy_unimpl,
+	EBPF_FUNC_dummy_unimpl,		/* 20 */
 	EBPF_FUNC_exec_get_interp,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };
