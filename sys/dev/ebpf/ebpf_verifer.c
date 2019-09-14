@@ -33,10 +33,17 @@ ebpf_validate(const struct ebpf_vm *vm, const struct ebpf_inst *insts,
 		return false;
 	}
 
+	if (num_insts == 0) {
+		ebpf_error("no instructions");
+		return false;
+	}
+
+#if 0
 	if (num_insts == 0 || insts[num_insts - 1].opcode != EBPF_OP_EXIT) {
 		ebpf_error("no exit at end of instructions\n");
 		return false;
 	}
+#endif
 
 	int i;
 	for (i = 0; i < num_insts; i++) {
