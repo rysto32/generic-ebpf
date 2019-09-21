@@ -539,6 +539,109 @@ ebpf_probe_strncmp(struct ebpf_vm_state *s, const char *a, const char *b,
 	return (strncmp(a, b, len));
 }
 
+static int
+path_strip_trailing_slashes(char * path, size_t *base_idx)
+{
+	size_t i;
+
+	i = *base_idx;
+	while (i > 0 && path[i - 1] == '/') {
+		path[i - 1] = '\0';
+		--i;
+	}
+
+	*base_idx = i;
+	return (0);
+}
+
+static int
+path_strip_last_comp(char * path, size_t *base_idx)
+{
+	char ch;
+	size_t i;
+
+	i = *base_idx;
+	if (i == 0) {
+		// .. went outside of path; error
+		return (EINVAL);
+	}
+
+	do {
+
+		ch = path[i - 1];
+		path[i - 1] = '\0';
+		--i;
+	} while (ch != '/');
+
+	*base_idx = i;
+	return (path_strip_trailing_slashes(path, base_idx));
+}
+
+int
+ebpf_probe_canonical_path(struct ebpf_vm_state *s, char *base,
+    const char * rela, size_t bufsize)
+{
+	int error;
+	char ch;
+	size_t base_idx, i;
+
+	if (rela[0] == '/') {
+		memcpy(base, rela, bufsize);
+		return (0);
+	}
+
+	base_idx = strlen(base);
+	error = path_strip_trailing_slashes(base, &base_idx);
+	if (error != 0) {
+		return (error);
+	}
+
+	error = path_strip_last_comp(base, &base_idx);
+	if (error != 0) {
+		return (error);
+	}
+
+	for (i = 0; i < bufsize; ++i) {
+next:
+		if (rela[i] == '\0') {
+			base[base_idx] = '\0';
+			return (0);
+
+		} else if ((i + 1) < bufsize && rela[i] == '.' && rela[i+1] == '.') {
+			error = path_strip_last_comp(base, &base_idx);
+			if (error != 0) {
+				return error;
+			}
+
+		} else if (rela[i] == '.' &&
+		    (((i + 1) == bufsize) || (rela[i+1] == '/' || rela[i+1] == '\0'))) {
+			/* Skip over "." path components */
+			continue;
+
+		} else if (rela[i] != '/') {
+			base[base_idx] = '/';
+			++base_idx;
+			while(1) {
+				if (base_idx == bufsize) {
+					return (ENAMETOOLONG);
+				}
+
+				ch = rela[i];
+				++i;
+				if (ch == '/' || ch == '\0' || i == bufsize) {
+					goto next;
+				}
+
+				base[base_idx] = ch;
+				++base_idx;
+			}
+		}
+
+	}
+
+	return (ENAMETOOLONG);
+}
+
 /*
  * Kernel module operations
  */

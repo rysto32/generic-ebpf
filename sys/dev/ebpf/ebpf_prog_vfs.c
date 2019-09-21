@@ -60,6 +60,7 @@ vfs_vm_attach_func(struct ebpf_vm *vm)
 	ebpf_register(vm, EBPF_FUNC_readlinkat, "readlinkat", ebpf_probe_readlinkat);
 	ebpf_register(vm, EBPF_FUNC_exec_get_interp, "exec_get_interp", ebpf_probe_exec_get_interp);
 	ebpf_register(vm, EBPF_FUNC_strncmp, "strncmp", ebpf_probe_strncmp);
+	ebpf_register(vm, EBPF_FUNC_canonical_path, "canonical_path", ebpf_probe_canonical_path);
 }
 
 static int
