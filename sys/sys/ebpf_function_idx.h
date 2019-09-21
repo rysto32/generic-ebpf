@@ -41,5 +41,6 @@ enum ebpf_common_functions {
 	EBPF_FUNC_readlinkat,
 	EBPF_FUNC_dummy_unimpl,		/* 20 */
 	EBPF_FUNC_exec_get_interp,
+	EBPF_FUNC_strncmp,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };

@@ -114,3 +114,5 @@ int ebpf_probe_readlinkat(struct ebpf_vm_state *, int fd, const char *path,
     char *buf, size_t bufsize);
 int ebpf_probe_exec_get_interp(struct ebpf_vm_state *, int fd, char *buf,
     size_t bufsize, int *type);
+int ebpf_probe_strncmp(struct ebpf_vm_state *, const char *a, const char *b,
+    size_t len);

@@ -531,6 +531,14 @@ ebpf_probe_exec_get_interp(struct ebpf_vm_state *s, int fd, char *buf,
 	return (error);
 }
 
+int
+ebpf_probe_strncmp(struct ebpf_vm_state *s, const char *a, const char *b,
+    size_t len)
+{
+
+	return (strncmp(a, b, len));
+}
+
 /*
  * Kernel module operations
  */
