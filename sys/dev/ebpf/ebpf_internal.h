@@ -118,3 +118,5 @@ int ebpf_probe_strncmp(struct ebpf_vm_state *, const char *a, const char *b,
     size_t len);
 int ebpf_probe_canonical_path(struct ebpf_vm_state *, char *base,
     const char * rela, size_t bufsize);
+int ebpf_probe_renameat(struct ebpf_vm_state *, int fromfd, const char *from,
+    int tofd, const char *to);

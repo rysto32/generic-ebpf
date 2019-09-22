@@ -39,3 +39,4 @@ static EBPF_FUNC(int, dummy_unimpl, void);
 static EBPF_FUNC(int, exec_get_interp, int fd, char *buf, size_t bufsize, int *type);
 static EBPF_FUNC(int, strncmp, const char *a, const char *b, size_t len);
 static EBPF_FUNC(int, canonical_path, char * base, const char *target, size_t len);
+static EBPF_FUNC(int, renameat, int fromfd, const char *from, int tofd, const char *to);

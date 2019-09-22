@@ -43,5 +43,6 @@ enum ebpf_common_functions {
 	EBPF_FUNC_exec_get_interp,
 	EBPF_FUNC_strncmp,
 	EBPF_FUNC_canonical_path,
+	EBPF_FUNC_renameat,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };
