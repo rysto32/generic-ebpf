@@ -602,7 +602,6 @@ ebpf_probe_canonical_path(struct ebpf_vm_state *s, char *base,
 	}
 
 	for (i = 0; i < bufsize; ++i) {
-next:
 		if (rela[i] == '\0') {
 			base[base_idx] = '\0';
 			return (0);
@@ -621,20 +620,20 @@ next:
 		} else if (rela[i] != '/') {
 			base[base_idx] = '/';
 			++base_idx;
-			while(1) {
+			do  {
 				if (base_idx == bufsize) {
 					return (ENAMETOOLONG);
 				}
 
 				ch = rela[i];
-				++i;
-				if (ch == '/' || ch == '\0' || i == bufsize) {
-					goto next;
+				if (ch == '/' || ch == '\0') {
+					break;
 				}
+				++i;
 
 				base[base_idx] = ch;
 				++base_idx;
-			}
+			} while (i < bufsize);
 		}
 
 	}
