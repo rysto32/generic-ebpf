@@ -586,19 +586,19 @@ ebpf_probe_canonical_path(struct ebpf_vm_state *s, char *base,
 	size_t base_idx, i;
 
 	if (rela[0] == '/') {
-		memcpy(base, rela, bufsize);
-		return (0);
-	}
+		memset(base, 0, bufsize);
+		base_idx = 0;
+	} else {
+		base_idx = strlen(base);
+		error = path_strip_trailing_slashes(base, &base_idx);
+		if (error != 0) {
+			return (error);
+		}
 
-	base_idx = strlen(base);
-	error = path_strip_trailing_slashes(base, &base_idx);
-	if (error != 0) {
-		return (error);
-	}
-
-	error = path_strip_last_comp(base, &base_idx);
-	if (error != 0) {
-		return (error);
+		error = path_strip_last_comp(base, &base_idx);
+		if (error != 0) {
+			return (error);
+		}
 	}
 
 	for (i = 0; i < bufsize; ++i) {
