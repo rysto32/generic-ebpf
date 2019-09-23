@@ -28,7 +28,6 @@ struct ebpf_prog {
 	uint32_t prog_len;
 	void (*deinit)(struct ebpf_prog *, void *);
 	struct ebpf_vm *vm;
-	struct ebpf_probe_state *probe;
 };
 
 struct ebpf_prog_attr {

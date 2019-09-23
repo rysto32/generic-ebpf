@@ -626,7 +626,6 @@ static int
 ebpf_attach(union ebpf_req *req, ebpf_thread *td)
 {
 	struct ebpf_req_attach *attach;
-	struct ebpf_probe * probe;
 	ebpf_file *f;
 	struct ebpf_obj_prog *prog_obj;
 	int error;
@@ -635,11 +634,6 @@ ebpf_attach(union ebpf_req *req, ebpf_thread *td)
 
 	if (!has_null_term(attach->probe_name, sizeof(attach->probe_name))) {
 		return (EINVAL);
-	}
-
-	probe = ebpf_find_probe(attach->probe_name);
-	if (probe == NULL) {
-		return (ENOENT);
 	}
 
 	error = ebpf_fget(td, attach->prog_fd, &f);
@@ -658,8 +652,12 @@ ebpf_attach(union ebpf_req *req, ebpf_thread *td)
 		goto err0;
 	}
 
-	ebpf_probe_attach(probe, &prog_obj->prog, attach->jit);
-	error = 0;
+	error = ebpf_probe_attach(attach->probe_name, prog_obj, attach->jit);
+	if (error != 0) {
+		goto err0;
+	}
+
+	return (0);
 
 err0:
 	ebpf_fdrop(f, td);

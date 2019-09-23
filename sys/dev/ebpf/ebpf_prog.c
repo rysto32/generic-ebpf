@@ -61,7 +61,6 @@ ebpf_prog_init(struct ebpf_prog *prog_obj, struct ebpf_prog_attr *attr)
 	prog_obj->prog_len = attr->prog_len;
 	prog_obj->prog = insts;
 	prog_obj->deinit = ebpf_prog_deinit_default;
-	prog_obj->probe = NULL;
 
 	return 0;
 }
@@ -114,10 +113,6 @@ fail:
 void
 ebpf_prog_deinit_default(struct ebpf_prog *prog_obj, void *arg)
 {
-	printf("Deinit prog: probe=%p\n", prog_obj->probe);
-	if (prog_obj->probe != NULL) {
-		ebpf_probe_detach(prog_obj->probe);
-	}
 
 	if (prog_obj->vm != NULL) {
 		if (prog_obj->type->vm_deinit) {

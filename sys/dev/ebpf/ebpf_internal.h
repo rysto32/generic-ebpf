@@ -81,12 +81,11 @@ int ebpf_fd_to_program(ebpf_thread *td, int fd, ebpf_file **fp, struct ebpf_prog
 
 void ebpf_vm_init_state(struct ebpf_vm_state *state);
 
-struct ebpf_probe_state;
-
-int ebpf_probe_attach(struct ebpf_probe *probe, struct ebpf_prog *prog, int jit);
-void ebpf_probe_detach(struct ebpf_probe_state *state);
-int ebpf_fire(struct ebpf_probe *probe, uintptr_t arg0, uintptr_t arg1,
+int ebpf_probe_attach(const char *, struct ebpf_obj_prog *prog, int jit);
+int ebpf_fire(struct ebpf_probe *probe, void *, uintptr_t arg0, uintptr_t arg1,
     uintptr_t arg2, uintptr_t arg3, uintptr_t arg4, uintptr_t arg5);
+void *ebpf_probe_clone(struct ebpf_probe *, void *);
+void ebpf_probe_release(struct ebpf_probe *, void *);
 
 int ebpf_probe_copyinstr(struct ebpf_vm_state *, const void *uaddr, void *kaddr,
 size_t len, size_t *done);

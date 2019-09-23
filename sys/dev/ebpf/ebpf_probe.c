@@ -20,71 +20,86 @@
 #include "ebpf_prog.h"
 
 #include <sys/ebpf_probe.h>
+#include <sys/refcount.h>
 
 struct ebpf_probe_state
 {
 	struct ebpf_probe *probe;
-	struct ebpf_prog *prog;
+	struct ebpf_obj_prog *prog;
 	int jit;
+	uint32_t refcount;
 };
 
 int
-ebpf_probe_attach(struct ebpf_probe *probe, struct ebpf_prog *prog, int jit)
+ebpf_probe_attach(const char * pr_name, struct ebpf_obj_prog *prog, int jit)
 {
+	struct ebpf_probe *probe;
 	struct ebpf_probe_state *state;
 
 	state = ebpf_calloc(sizeof(*state), 1);
 	if (state == NULL)
 		return (ENOMEM);
 
+	ebpf_refcount_init(&state->refcount, 1);
 	state->jit = jit;
-	state->probe = probe;
 	state->prog = prog;
 
-	// XXX we need locking here to deal with close() racing with attach()
-	probe->module_state = state;
-	prog->probe = state;
-	atomic_set_acq_int(&probe->active, 1);
+	probe = ebpf_activate_probe(pr_name, state);
+	if (probe == NULL) {
+		ebpf_free(state);
+		return (ENOENT);
+	}
 
-	printf("Attach to probe '%s'\n", probe->name);
+	state->probe = probe;
+
 	return (0);
 }
 
-void
-ebpf_probe_detach(struct ebpf_probe_state *state)
+void *
+ebpf_probe_clone(struct ebpf_probe *probe, void *a)
 {
-	struct ebpf_probe *probe;
+	struct ebpf_probe_state *state;
 
-	probe = state->probe;
-	printf("Detach from '%s'\n", probe->name);
+	state = a;
+	ebpf_refcount_acquire(&state->refcount);
 
-	probe->module_state = NULL;
+	return (state);
+}
 
-	ebpf_probe_drain(probe);
+void
+ebpf_probe_release(struct ebpf_probe *probe, void *a)
+{
+	struct ebpf_probe_state *state;
 
-	ebpf_free(state);
+	state = a;
+
+	if (refcount_release(&state->refcount)) {
+		ebpf_fdrop(state->prog->obj.f, ebpf_curthread());
+		ebpf_free(state);
+	}
 }
 
 int
-ebpf_fire(struct ebpf_probe *probe, uintptr_t arg0, uintptr_t arg1,
+ebpf_fire(struct ebpf_probe *probe, void *a, uintptr_t arg0, uintptr_t arg1,
     uintptr_t arg2, uintptr_t arg3, uintptr_t arg4, uintptr_t arg5)
 {
 	ebpf_thread *td;
 	struct ebpf_probe_state *state;
 	struct ebpf_vm *vm;
+	ebpf_file *vm_fp;
 	struct ebpf_vm_state vm_state;
 	int error, ret;
 
-	state = probe->module_state;
-	if (state == NULL)
-		return (EBPF_ACTION_CONTINUE);
+	state = a;
 
 	ebpf_vm_init_state(&vm_state);
 
-	vm_state.next_vm = state->prog->vm;
+	vm_state.next_vm = state->prog->prog.vm;
 	vm_state.next_vm_args[0] = arg0;
 	vm_state.next_vm_args[1] = arg1;
 	vm_state.num_args = 2;
+
+	vm_fp = NULL;
 
 	td = ebpf_curthread();
 
@@ -92,7 +107,7 @@ ebpf_fire(struct ebpf_probe *probe, uintptr_t arg0, uintptr_t arg1,
 		vm = vm_state.next_vm;
 		vm_state.next_vm = NULL;
 
-		error = ebpf_prog_reserve_cpu(state->prog, vm, &vm_state);
+		error = ebpf_prog_reserve_cpu(&state->prog->prog, vm, &vm_state);
 		if (error != 0) {
 			ebpf_probe_set_errno(&vm_state, error);
 			return (EBPF_ACTION_RETURN);
@@ -104,11 +119,16 @@ ebpf_fire(struct ebpf_probe *probe, uintptr_t arg0, uintptr_t arg1,
 			ret = ebpf_exec(vm, &vm_state);
 		}
 
-		ebpf_prog_release_cpu(state->prog, vm, &vm_state);
-		if (vm_state.vm_fp != NULL) {
-			ebpf_fdrop(vm_state.vm_fp, td);
-			vm_state.vm_fp = NULL;
+		ebpf_prog_release_cpu(&state->prog->prog, vm, &vm_state);
+
+		/* Drop reference on program we just ran. */
+		if (vm_fp != NULL) {
+			ebpf_fdrop(vm_fp, td);
 		}
+
+		/* Grab pointer to program we will run on next iteration */
+		vm_fp = vm_state.vm_fp;
+		vm_state.vm_fp = NULL;
 
 		if (vm_state.deferred_func != 0) {
 			vm_state.deferred_func(&vm_state);
@@ -116,6 +136,8 @@ ebpf_fire(struct ebpf_probe *probe, uintptr_t arg0, uintptr_t arg1,
 		}
 		vm_state.num_tail_calls++;
 	}
+
+	KASSERT(vm_fp == NULL, ("Lost a reference to a program's file*"));
 
 	return (ret);
 }

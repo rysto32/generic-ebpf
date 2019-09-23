@@ -35,6 +35,8 @@ MALLOC_DEFINE(M_EBPFBUF, "ebpf-buffers", "Buffers for ebpf and its subsystems");
 
 static struct ebpf_module ebpf_mod_callbacks = {
 	.fire = ebpf_fire,
+	.clone_probe = ebpf_probe_clone,
+	.release_probe = ebpf_probe_release,
 };
 
 /*
