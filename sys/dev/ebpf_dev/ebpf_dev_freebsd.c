@@ -159,6 +159,7 @@ freebsd_ebpf_ioctl(struct cdev *dev, u_long cmd, caddr_t data, int ffla,
 
 static struct cdev *ebpf_dev;
 static struct cdevsw ebpf_cdevsw = {.d_version = D_VERSION,
+				    .d_flags = D_TRACKCLOSE,
 				    .d_name = "ebpf",
 				    .d_open = ebpf_open,
 				    .d_ioctl = freebsd_ebpf_ioctl,
