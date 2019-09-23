@@ -26,7 +26,7 @@
 
 #include <dev/ebpf_dev/ebpf_dev_platform.h>
 
-#define MAX_INSTS 65536
+#define MAX_INSTS 4096
 #define MAX_EXT_FUNCS 64
 #define STACK_SIZE 128
 
