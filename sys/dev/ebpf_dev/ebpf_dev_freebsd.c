@@ -22,6 +22,7 @@
 #include <sys/ebpf_dev.h>
 
 #include <sys/ebpf_probe.h>
+#include <sys/sysctl.h>
 
 /*
  * Global reference count. Since ebpf.ko doesn't provide
@@ -33,6 +34,8 @@
  * released when users close them.
  */
 static uint32_t ebpf_dev_global_refcount = 0;
+SYSCTL_INT(_debug, OID_AUTO, ebpf_dev_global_refcount, CTLFLAG_RD,
+    &ebpf_dev_global_refcount, 0, "");
 
 /*
  * Extend badfileops for anonimous file for ebpf objects.
