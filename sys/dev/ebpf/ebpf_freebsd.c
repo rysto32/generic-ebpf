@@ -653,7 +653,7 @@ ebpf_probe_renameat(struct ebpf_vm_state *s, int fromfd, const char *from,
 	td = curthread;
 	error = kern_renameat(td, fromfd, from, tofd, to, UIO_SYSSPACE);
 	if (error != 0) {
-		curthread->td_errno = error;
+		td->td_errno = error;
 	}
 
 	return (error);
