@@ -659,6 +659,44 @@ ebpf_probe_renameat(struct ebpf_vm_state *s, int fromfd, const char *from,
 	return (error);
 }
 
+int
+ebpf_probe_mkdirat(struct ebpf_vm_state *s, int fd, const char *path,
+    mode_t mode)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	error = kern_mkdirat(td, fd, path, UIO_SYSSPACE, mode);
+	if (error != 0) {
+		td->td_errno = error;
+	}
+
+	return (error);
+}
+
+int
+ebpf_probe_fchdir(struct ebpf_vm_state *s, int fd)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	error = kern_fchdir(td, fd);
+	if (error != 0) {
+		td->td_errno = error;
+	}
+
+	return (error);
+}
+
+pid_t
+ebpf_probe_getpid(void)
+{
+
+	return curthread->td_proc->p_pid;
+}
+
 /*
  * Kernel module operations
  */

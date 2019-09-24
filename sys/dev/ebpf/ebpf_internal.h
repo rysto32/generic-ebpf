@@ -119,3 +119,7 @@ int ebpf_probe_canonical_path(struct ebpf_vm_state *, char *base,
     const char * rela, size_t bufsize);
 int ebpf_probe_renameat(struct ebpf_vm_state *, int fromfd, const char *from,
     int tofd, const char *to);
+int ebpf_probe_mkdirat(struct ebpf_vm_state *, int fd, const char *path,
+    mode_t mode);
+int ebpf_probe_fchdir(struct ebpf_vm_state *, int fd);
+pid_t ebpf_probe_getpid(void);

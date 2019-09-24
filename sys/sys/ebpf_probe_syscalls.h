@@ -40,3 +40,7 @@ static EBPF_FUNC(int, exec_get_interp, int fd, char *buf, size_t bufsize, int *t
 static EBPF_FUNC(int, strncmp, const char *a, const char *b, size_t len);
 static EBPF_FUNC(int, canonical_path, char * base, const char *target, size_t len);
 static EBPF_FUNC(int, renameat, int fromfd, const char *from, int tofd, const char *to);
+static EBPF_FUNC(int, mkdirat, int fd, const char *path,
+    mode_t mode);
+static EBPF_FUNC(int, fchdir, int fd);
+static EBPF_FUNC(pid_t, getpid, void);

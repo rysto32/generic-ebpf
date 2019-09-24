@@ -44,5 +44,8 @@ enum ebpf_common_functions {
 	EBPF_FUNC_strncmp,
 	EBPF_FUNC_canonical_path,
 	EBPF_FUNC_renameat,
+	EBPF_FUNC_mkdirat,		/* 25 */
+	EBPF_FUNC_fchdir,
+	EBPF_FUNC_getpid,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };
