@@ -19,9 +19,19 @@
 #include "ebpf_map.h"
 #include "ebpf_internal.h"
 #include <sys/ebpf_vm.h>
+#include <sys/lock.h>
+#include <sys/mutex.h>
 
 struct ebpf_map_array {
 	void *array;
+};
+
+struct ebpf_map_arrayqueue {
+	struct ebpf_map_array array;
+
+	struct mtx lock;
+	int pidx; /* Producer Index */
+	int cidx; /* Consumer Index */
 };
 
 #define ARRAY_MAP(_map) ((struct ebpf_map_array *)(_map->data))
@@ -336,6 +346,127 @@ out:
 	return (error);
 }
 
+static int
+arrayqueue_init(struct ebpf_map *map, struct ebpf_map_attr *attr)
+{
+	struct ebpf_map_arrayqueue *queue;
+	int error;
+
+	queue = ebpf_calloc(1, sizeof(*queue));
+	if (queue == NULL) {
+		return (ENOMEM);
+	}
+
+	error = array_map_init_common(&queue->array, attr);
+	if (error != 0) {
+		ebpf_free(queue);
+		return error;
+	}
+
+	mtx_init(&queue->lock, "ebpf_arrayqueue", NULL, MTX_DEF);
+	queue->pidx = 0;
+	queue->cidx = 0;
+
+	map->data = queue;
+	map->percpu = false;
+
+	return 0;
+}
+
+static void
+arrayqueue_deinit(struct ebpf_map *map, void *arg)
+{
+	struct ebpf_map_arrayqueue *queue;
+
+	queue = map->data;
+
+	ebpf_epoch_wait();
+
+	mtx_destroy(&queue->lock);
+	ebpf_free(queue->array.array);
+	ebpf_free(queue);
+}
+
+static __inline int
+arrayqueue_isfull(struct ebpf_map *map, struct ebpf_map_arrayqueue *queue)
+{
+	if (queue->pidx == map->max_entries - 1) {
+		return queue->cidx == 0;
+	} else {
+		return (queue->pidx == (queue->cidx - 1));
+	}
+}
+
+static __inline int
+arrayqueue_isempty(struct ebpf_map *map, struct ebpf_map_arrayqueue *queue)
+{
+
+	return queue->cidx == queue->pidx;
+}
+
+static __inline void
+arrayqueue_idx_incr(struct ebpf_map *map, int *idx)
+{
+	int i;
+
+	i = *idx + 1;
+	if (i != map->max_entries) {
+		*idx = i;
+	} else {
+		*idx = 0;
+	}
+}
+
+static int
+arrayqueue_enqueue(struct ebpf_map *map, int cpu, void *value)
+{
+	struct ebpf_map_arrayqueue *queue;
+	int pidx, error;
+
+	queue = map->data;
+
+	mtx_lock(&queue->lock);
+	if (!arrayqueue_isfull(map, queue)) {
+		pidx = queue->pidx;
+		array_map_update_elem_common(map, &queue->array, pidx, value, 0);
+		arrayqueue_idx_incr(map, &queue->pidx);
+		wakeup_one(queue);
+		error = 0;
+	} else {
+		error = ENOSPC;
+	}
+	mtx_unlock(&queue->lock);
+
+	return (error);
+}
+
+static int
+arrayqueue_dequeue(struct ebpf_map *map, int cpu, void *buf)
+{
+	struct ebpf_map_arrayqueue *queue;
+	struct ebpf_map_array *array;
+	uint8_t *elem;
+	int cidx, error;
+
+	queue = map->data;
+
+	mtx_lock(&queue->lock);
+	if (!arrayqueue_isempty(map, queue)) {
+		cidx = queue->cidx;
+		array = &queue->array;
+		elem = (uint8_t *)(array->array) + (map->value_size * cidx);
+		memcpy(buf, elem, map->value_size);
+
+		arrayqueue_idx_incr(map, &queue->cidx);
+		error = 0;
+	} else {
+		error = EWOULDBLOCK;
+	}
+	mtx_unlock(&queue->lock);
+
+	return (error);
+}
+
 struct ebpf_map_type array_map_type = {
 	.name = "array",
 	.ops = {
@@ -378,5 +509,22 @@ struct ebpf_map_type progarray_map_type = {
 		.delete_elem_from_user = array_map_delete_elem,
 		.get_next_key_from_user = array_map_get_next_key,
 		.deinit = array_map_deinit
+	}
+};
+
+struct ebpf_map_type arrayqueue_type = {
+	.name = "arrayqueue",
+	.ops = {
+		.init = arrayqueue_init,
+		.update_elem = array_map_update_elem,
+		.lookup_elem = array_map_lookup_elem,
+		.delete_elem = array_map_delete_elem,
+		.update_elem_from_user = array_map_update_elem,
+		.lookup_elem_from_user = array_map_lookup_elem_from_user,
+		.delete_elem_from_user = array_map_delete_elem,
+		.get_next_key_from_user = array_map_get_next_key,
+		.enqueue = arrayqueue_enqueue,
+		.dequeue = arrayqueue_dequeue,
+		.deinit = arrayqueue_deinit
 	}
 };

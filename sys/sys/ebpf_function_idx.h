@@ -52,5 +52,7 @@ enum ebpf_common_functions {
 	EBPF_FUNC_ktrnamei,		/* 30 */
 	EBPF_FUNC_symlink_path,
 	EBPF_FUNC_strlcpy,
+	EBPF_FUNC_ebpf_map_enqueue,
+	EBPF_FUNC_ebpf_map_dequeue,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };

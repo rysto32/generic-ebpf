@@ -81,6 +81,7 @@ extern struct ebpf_map_type percpu_array_map_type;
 extern struct ebpf_map_type hashtable_map_type;
 extern struct ebpf_map_type percpu_hashtable_map_type;
 extern struct ebpf_map_type progarray_map_type;
+extern struct ebpf_map_type arrayqueue_type;
 
 /*
  * Prototypes of basic prog types

@@ -41,6 +41,8 @@ vfs_vm_attach_func(struct ebpf_vm *vm)
 	ebpf_register(vm, EBPF_FUNC_ebpf_map_lookup_elem, "ebpf_map_lookup_elem", ebpf_map_lookup_elem);
 	ebpf_register(vm, EBPF_FUNC_ebpf_map_delete_elem, "ebpf_map_delete_elem", ebpf_map_delete_elem);
 	ebpf_register(vm, EBPF_FUNC_ebpf_map_lookup_path, "ebpf_map_path_lookup", ebpf_map_path_lookup);
+	ebpf_register(vm, EBPF_FUNC_ebpf_map_enqueue, "ebpf_map_enqueue", ebpf_map_enqueue);
+	ebpf_register(vm, EBPF_FUNC_ebpf_map_dequeue, "ebpf_map_dequeue", ebpf_map_dequeue);
 
 	ebpf_register(vm, EBPF_FUNC_copyinstr, "copyinstr", ebpf_probe_copyinstr);
 	ebpf_register(vm, EBPF_FUNC_copyout, "copyout", ebpf_probe_copyout);

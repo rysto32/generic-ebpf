@@ -43,6 +43,9 @@ typedef int ebpf_map_get_next_key_t(struct ebpf_map *map, int cpu, void *key,
 				    void *next_key);
 typedef void ebpf_map_deinit_t(struct ebpf_map *map, void *arg);
 
+typedef int ebpf_map_enqueue_t(struct ebpf_map *map, int cpu, void *value);
+typedef int ebpf_map_dequeue_t(struct ebpf_map *map, int cpu, void *buf);
+
 struct ebpf_map_ops {
 	ebpf_map_init_t *init;
 	ebpf_map_lookup_elem_t *lookup_elem;
@@ -52,6 +55,8 @@ struct ebpf_map_ops {
 	ebpf_map_update_elem_t *update_elem_from_user;
 	ebpf_map_delete_elem_t *delete_elem_from_user;
 	ebpf_map_get_next_key_t *get_next_key_from_user;
+	ebpf_map_enqueue_t *enqueue;
+	ebpf_map_dequeue_t *dequeue;
 	ebpf_map_deinit_t *deinit;
 };
 
@@ -87,6 +92,8 @@ int ebpf_map_update_elem_from_user(struct ebpf_map *map, void *key, void *value,
 int ebpf_map_delete_elem_from_user(struct ebpf_map *map, void *key);
 int ebpf_map_get_next_key_from_user(struct ebpf_map *map, void *key,
 				    void *next_key);
+int ebpf_map_enqueue(struct ebpf_vm_state *, struct ebpf_map *, void *);
+int ebpf_map_dequeue(struct ebpf_vm_state *, struct ebpf_map *, void *);
 
 /*
  * Users can extend (make subclass of) struct ebpf_map, so the destructor of

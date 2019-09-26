@@ -26,6 +26,7 @@ const struct ebpf_map_type *ebpf_map_types[] = {
 	[EBPF_MAP_TYPE_HASHTABLE]        = &hashtable_map_type,
 	[EBPF_MAP_TYPE_PERCPU_HASHTABLE] = &percpu_hashtable_map_type,
 	[EBPF_MAP_TYPE_PROGARRAY]        = &progarray_map_type,
+	[EBPF_MAP_TYPE_ARRAYQUEUE]       = &arrayqueue_type,
 };
 
 #define EBPF_MAP_TYPE_OPS(_type) (ebpf_map_types[_type]->ops)
@@ -214,6 +215,50 @@ ebpf_map_get_next_key_from_user(struct ebpf_map *map, void *key, void *next_key)
 	ebpf_epoch_exit();
 
 	return error;
+}
+
+int
+ebpf_map_enqueue(struct ebpf_vm_state *s, struct ebpf_map *map, void *val)
+{
+	const struct ebpf_map_ops *ops;
+	int error;
+
+	if (map == NULL || val == NULL) {
+		return (EINVAL);
+	}
+
+	ebpf_epoch_enter();
+	ops = &EBPF_MAP_TYPE_OPS(map->type);
+	if (ops->enqueue != NULL) {
+		error = ops->enqueue(map, s->cpu, val);
+	} else {
+		error = ENODEV;
+	}
+	ebpf_epoch_exit();
+
+	return (error);
+}
+
+int
+ebpf_map_dequeue(struct ebpf_vm_state *s, struct ebpf_map *map, void *buf)
+{
+	const struct ebpf_map_ops *ops;
+	int error;
+
+	if (map == NULL) {
+		return (EINVAL);
+	}
+
+	ebpf_epoch_enter();
+	ops = &EBPF_MAP_TYPE_OPS(map->type);
+	if (ops->dequeue != NULL) {
+		error = ops->dequeue(map, s->cpu, buf);
+	} else {
+		error = ENODEV;
+	}
+	ebpf_epoch_exit();
+
+	return (error);
 }
 
 void
