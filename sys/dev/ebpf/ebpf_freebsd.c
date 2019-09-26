@@ -25,6 +25,7 @@
 #include <sys/ebpf_probe.h>
 #include <sys/exec.h>
 #include <sys/imgact.h>
+#include <sys/ktrace.h>
 #include <sys/proc.h>
 #include <sys/syscallsubr.h>
 #include <sys/wait.h>
@@ -271,6 +272,17 @@ ebpf_probe_copyinstr(struct ebpf_vm_state *s, const void *uaddr, void *kaddr, si
 }
 
 int
+ebpf_probe_copyin(struct ebpf_vm_state *s, const void *uaddr, void *kaddr, size_t size)
+{
+	int error;
+
+	error = copyin(uaddr, kaddr, size);
+	curthread->td_errno = error;
+
+	return (error);
+}
+
+int
 ebpf_probe_copyout(struct ebpf_vm_state *s, const void *kaddr, void *uaddr, size_t len)
 {
 	int error;
@@ -356,6 +368,13 @@ ebpf_probe_set_errno(struct ebpf_vm_state *s, int error)
 
 	curthread->td_errno = error;
 	return (0);
+}
+
+int
+ebpf_probe_get_errno(struct ebpf_vm_state *s)
+{
+
+	return (curthread->td_errno);
 }
 
 int
@@ -579,9 +598,8 @@ path_strip_last_comp(char * path, size_t *base_idx)
 	return (path_strip_trailing_slashes(path, base_idx));
 }
 
-int
-ebpf_probe_canonical_path(struct ebpf_vm_state *s, char *base,
-    const char * rela, size_t bufsize)
+static int
+make_canonical(char *base, const char * rela, size_t bufsize)
 {
 	int error;
 	char ch;
@@ -592,15 +610,6 @@ ebpf_probe_canonical_path(struct ebpf_vm_state *s, char *base,
 		base_idx = 0;
 	} else {
 		base_idx = strlen(base);
-		error = path_strip_trailing_slashes(base, &base_idx);
-		if (error != 0) {
-			return (error);
-		}
-
-		error = path_strip_last_comp(base, &base_idx);
-		if (error != 0) {
-			return (error);
-		}
 	}
 
 	for (i = 0; i < bufsize; ++i) {
@@ -641,6 +650,14 @@ ebpf_probe_canonical_path(struct ebpf_vm_state *s, char *base,
 	}
 
 	return (ENAMETOOLONG);
+}
+
+int
+ebpf_probe_canonical_path(struct ebpf_vm_state *s, char *base,
+    const char * rela, size_t bufsize)
+{
+
+	return (make_canonical(base, rela, bufsize));
 }
 
 int
@@ -691,10 +708,49 @@ ebpf_probe_fchdir(struct ebpf_vm_state *s, int fd)
 }
 
 pid_t
-ebpf_probe_getpid(void)
+ebpf_probe_getpid(struct ebpf_vm_state *s)
 {
 
-	return curthread->td_proc->p_pid;
+	return (curthread->td_proc->p_pid);
+}
+
+int
+ebpf_probe_ktrnamei(struct ebpf_vm_state *s, char *path)
+{
+
+	ktrnamei(path);
+	return (0);
+}
+
+int
+ebpf_probe_symlink_path(struct ebpf_vm_state *s, char *base,
+    const char * rela, size_t bufsize)
+{
+	size_t base_idx;
+	int error;
+
+	if (rela[0] != '/') {
+		base_idx = strlen(base);
+		error = path_strip_trailing_slashes(base, &base_idx);
+		if (error != 0) {
+			return (error);
+		}
+
+		error = path_strip_last_comp(base, &base_idx);
+		if (error != 0) {
+			return (error);
+		}
+	}
+
+	return (make_canonical(base, rela, bufsize));
+}
+
+size_t
+ebpf_probe_strlcpy(struct ebpf_vm_state *s, char *dest,
+    const char * src, size_t bufsize)
+{
+
+	return (strlcpy(dest, src, bufsize));
 }
 
 /*

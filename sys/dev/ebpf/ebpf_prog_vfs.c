@@ -65,6 +65,11 @@ vfs_vm_attach_func(struct ebpf_vm *vm)
 	ebpf_register(vm, EBPF_FUNC_mkdirat, "mkdirat", ebpf_probe_mkdirat);
 	ebpf_register(vm, EBPF_FUNC_fchdir, "fchdir", ebpf_probe_fchdir);
 	ebpf_register(vm, EBPF_FUNC_getpid, "getpid", ebpf_probe_getpid);
+	ebpf_register(vm, EBPF_FUNC_get_errno, "get_errno", ebpf_probe_get_errno);
+	ebpf_register(vm, EBPF_FUNC_copyin, "copyin", ebpf_probe_copyin);
+	ebpf_register(vm, EBPF_FUNC_ktrnamei, "ktrnamei", ebpf_probe_ktrnamei);
+	ebpf_register(vm, EBPF_FUNC_symlink_path, "symlink_path", ebpf_probe_symlink_path);
+	ebpf_register(vm, EBPF_FUNC_strlcpy, "strlcpy", ebpf_probe_strlcpy);
 }
 
 static int

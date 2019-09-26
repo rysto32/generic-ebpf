@@ -47,5 +47,10 @@ enum ebpf_common_functions {
 	EBPF_FUNC_mkdirat,		/* 25 */
 	EBPF_FUNC_fchdir,
 	EBPF_FUNC_getpid,
+	EBPF_FUNC_get_errno,
+	EBPF_FUNC_copyin,
+	EBPF_FUNC_ktrnamei,		/* 30 */
+	EBPF_FUNC_symlink_path,
+	EBPF_FUNC_strlcpy,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };

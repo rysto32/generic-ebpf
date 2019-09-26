@@ -122,4 +122,11 @@ int ebpf_probe_renameat(struct ebpf_vm_state *, int fromfd, const char *from,
 int ebpf_probe_mkdirat(struct ebpf_vm_state *, int fd, const char *path,
     mode_t mode);
 int ebpf_probe_fchdir(struct ebpf_vm_state *, int fd);
-pid_t ebpf_probe_getpid(void);
+pid_t ebpf_probe_getpid(struct ebpf_vm_state *);
+int ebpf_probe_get_errno(struct ebpf_vm_state *);
+int ebpf_probe_copyin(struct ebpf_vm_state *s, const void *, void *, size_t);
+int ebpf_probe_ktrnamei(struct ebpf_vm_state *s, char *);
+int ebpf_probe_symlink_path(struct ebpf_vm_state *, char *base,
+    const char * rela, size_t bufsize);
+size_t ebpf_probe_strlcpy(struct ebpf_vm_state *, char *dest,
+    const char * src, size_t bufsize);

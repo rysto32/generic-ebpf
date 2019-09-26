@@ -44,3 +44,8 @@ static EBPF_FUNC(int, mkdirat, int fd, const char *path,
     mode_t mode);
 static EBPF_FUNC(int, fchdir, int fd);
 static EBPF_FUNC(pid_t, getpid, void);
+static EBPF_FUNC(int, get_errno, void);
+static EBPF_FUNC(int, copyin, const void *, void *, size_t);
+static EBPF_FUNC(int, ktrnamei, const char *);
+static EBPF_FUNC(int, symlink_path, char *dir, const char *target, size_t len);
+static EBPF_FUNC(size_t, strlcpy, char *dest, const char *src, size_t len);
