@@ -444,6 +444,9 @@ ebpf_probe_do_deferred_pdwait4(struct ebpf_vm_state *s)
 {
 	int error, status;
 
+	status = 0;
+	bzero(&s->scratch.wait4.rusage, sizeof(s->scratch.wait4.rusage));
+
 	error = ebpf_probe_do_pdwait(s->scratch.wait4.fd, &status,
 	    s->scratch.wait4.options, &s->scratch.wait4.rusage);
 
