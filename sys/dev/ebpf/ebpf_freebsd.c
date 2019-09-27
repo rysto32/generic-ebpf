@@ -454,7 +454,8 @@ ebpf_probe_do_deferred_pdwait4(struct ebpf_vm_state *s)
 	s->next_vm_args[1] = error;
 	s->next_vm_args[2] = status;
 	s->next_vm_args[3] = (uintptr_t)&s->scratch.wait4.rusage;
-	s->num_args = 4;
+	s->next_vm_args[4] = s->scratch.wait4.fd;
+	s->num_args = 5;
 }
 
 int
