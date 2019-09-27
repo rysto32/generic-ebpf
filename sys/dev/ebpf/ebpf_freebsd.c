@@ -460,11 +460,13 @@ ebpf_probe_do_deferred_pdwait4(struct ebpf_vm_state *s)
 
 int
 ebpf_probe_pdwait4_defer(struct ebpf_vm_state *s, int fd, int options, void *arg,
-    int *prog_fd)
+    void *next)
 {
 	struct ebpf_prog *prog;
+	int *prog_fd;
 	int error;
 
+	prog_fd = next;
 	if (prog_fd == NULL) {
 		curthread->td_errno = ENOENT;
 		return ENOENT;
