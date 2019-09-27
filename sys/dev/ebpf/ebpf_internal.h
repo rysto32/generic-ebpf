@@ -69,6 +69,12 @@ struct ebpf_vm_state
 			int options;
 			struct rusage rusage;
 		} wait4;
+		struct {
+			int kq;
+			int ts_valid;
+			struct timespec ts;
+			struct kevent ev;
+		} kevent;
 	} scratch;
 };
 
@@ -130,3 +136,8 @@ int ebpf_probe_symlink_path(struct ebpf_vm_state *, char *base,
     const char * rela, size_t bufsize);
 size_t ebpf_probe_strlcpy(struct ebpf_vm_state *, char *dest,
     const char * src, size_t bufsize);
+int ebpf_probe_kqueue(struct ebpf_vm_state *, int);
+int ebpf_probe_kevent_install(struct ebpf_vm_state *, int, struct kevent *, int);
+int ebpf_probe_kevent_poll(struct ebpf_vm_state *, int, struct kevent *, int);
+int ebpf_probe_kevent_block(struct ebpf_vm_state *, int,
+      const struct timespec *, void *);

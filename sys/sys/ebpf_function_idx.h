@@ -54,5 +54,9 @@ enum ebpf_common_functions {
 	EBPF_FUNC_strlcpy,
 	EBPF_FUNC_ebpf_map_enqueue,
 	EBPF_FUNC_ebpf_map_dequeue,
+	EBPF_FUNC_kqueue,		/* 35 */
+	EBPF_FUNC_kevent_install,
+	EBPF_FUNC_kevent_poll,
+	EBPF_FUNC_kevent_block,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };

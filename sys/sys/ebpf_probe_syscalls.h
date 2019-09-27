@@ -19,6 +19,8 @@
 #pragma once
 #include <sys/ebpf_uapi.h>
 
+struct kevent;
+
 static EBPF_FUNC(int, copyinstr, const void *uaddr, void *kaddr, size_t len, size_t *done);
 static EBPF_FUNC(int, copyout, const void *, void *, size_t);
 static EBPF_FUNC(int, dup, int fd);
@@ -49,3 +51,8 @@ static EBPF_FUNC(int, copyin, const void *, void *, size_t);
 static EBPF_FUNC(int, ktrnamei, const char *);
 static EBPF_FUNC(int, symlink_path, char *dir, const char *target, size_t len);
 static EBPF_FUNC(size_t, strlcpy, char *dest, const char *src, size_t len);
+static EBPF_FUNC(int, kqueue, int);
+static EBPF_FUNC(int, kevent_install, int, const struct kevent *, int num);
+static EBPF_FUNC(int, kevent_poll, int, struct kevent *, int num);
+static EBPF_FUNC(int, kevent_block, int kq, const struct timespec *to,
+    void *callback);

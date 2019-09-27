@@ -765,6 +765,145 @@ ebpf_probe_strlcpy(struct ebpf_vm_state *s, char *dest,
 	return (strlcpy(dest, src, bufsize));
 }
 
+int
+ebpf_probe_kqueue(struct ebpf_vm_state *s, int uflags)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	error = kern_kqueue(td, 0, NULL, uflags);
+	if (error != 0) {
+		td->td_errno = error;
+		return (-1);
+	}
+
+	return (td->td_retval[0]);
+}
+
+static int
+ebpf_kevent_copyout(void *arg, struct kevent *kevp, int count)
+{
+
+	memcpy(arg, kevp, sizeof(*kevp) * count);
+	return (0);
+}
+
+static int
+ebpf_kevent_copyin(void *arg, struct kevent *kevp, int count)
+{
+
+	memcpy(kevp, arg, sizeof(*kevp) * count);
+	return (0);
+}
+
+static void
+ebpf_init_kops(struct kevent_copyops *k_ops, void *arg)
+{
+
+	k_ops->arg = arg;
+	k_ops->k_copyout = ebpf_kevent_copyout,
+	k_ops->k_copyin = ebpf_kevent_copyin,
+	k_ops->kevent_size = sizeof(struct kevent);
+}
+
+int
+ebpf_probe_kevent_install(struct ebpf_vm_state *s, int kq, struct kevent *ev,
+    int num)
+{
+	struct kevent_copyops k_ops;
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	ebpf_init_kops(&k_ops, ev);
+	error = kern_kevent(td, kq, num, 0, &k_ops, NULL);
+	if (error != 0) {
+		td->td_errno = error;
+		return (-1);
+	}
+
+	return (td->td_retval[0]);
+}
+
+int
+ebpf_probe_kevent_poll(struct ebpf_vm_state *s, int kq, struct kevent *ev,
+    int num)
+{
+	struct kevent_copyops k_ops;
+	struct timespec timeout = {0, 0};
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	ebpf_init_kops(&k_ops, ev);
+	error = kern_kevent(td, kq, 0, num, &k_ops, &timeout);
+	if (error != 0) {
+		td->td_errno = error;
+		return (-1);
+	}
+
+	return (td->td_retval[0]);
+}
+
+static void
+ebpf_probe_do_deferred_kevent(struct ebpf_vm_state *s)
+{
+	struct kevent_copyops k_ops;
+	struct thread *td;
+	struct timespec *timeout;
+	int error;
+
+	td = curthread;
+	bzero(&s->scratch.kevent.ev, sizeof(s->scratch.kevent.ev));
+	ebpf_init_kops(&k_ops, &s->scratch.kevent.ev);
+	if (s->scratch.kevent.ts_valid) {
+		timeout = &s->scratch.kevent.ts;
+	} else {
+		timeout = NULL;
+	}
+	error = kern_kevent(td, s->scratch.kevent.kq, 0, 1, &k_ops, timeout);
+
+	/* s->next_vm_args[0] remains the same. */
+	s->next_vm_args[1] = error;
+	s->next_vm_args[2] = (uintptr_t)&s->scratch.kevent.ev;
+	s->num_args = 3;
+}
+
+
+int
+ebpf_probe_kevent_block(struct ebpf_vm_state *s, int kq,
+    const struct timespec *ts, void *next)
+{
+	struct ebpf_prog *prog;
+	int *prog_fd;
+	int error;
+
+	prog_fd = next;
+	if (prog_fd == NULL) {
+		curthread->td_errno = ENOENT;
+		return (ENOENT);
+	}
+
+	error = ebpf_fd_to_program(ebpf_curthread(), *prog_fd, &s->vm_fp, &prog);
+	if (error != 0) {
+		curthread->td_errno = error;
+		return (error);
+	}
+
+	s->scratch.kevent.kq = kq;
+	if (ts != NULL) {
+		s->scratch.kevent.ts_valid = 1;
+		s->scratch.kevent.ts = *ts;
+	} else {
+		s->scratch.kevent.ts_valid = 0;
+	}
+
+	s->next_vm = prog->vm;
+	s->deferred_func = ebpf_probe_do_deferred_kevent;
+	return (0);
+}
+
 /*
  * Kernel module operations
  */

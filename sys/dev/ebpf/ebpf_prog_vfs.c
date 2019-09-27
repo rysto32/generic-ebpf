@@ -72,6 +72,10 @@ vfs_vm_attach_func(struct ebpf_vm *vm)
 	ebpf_register(vm, EBPF_FUNC_ktrnamei, "ktrnamei", ebpf_probe_ktrnamei);
 	ebpf_register(vm, EBPF_FUNC_symlink_path, "symlink_path", ebpf_probe_symlink_path);
 	ebpf_register(vm, EBPF_FUNC_strlcpy, "strlcpy", ebpf_probe_strlcpy);
+	ebpf_register(vm, EBPF_FUNC_kqueue, "kqueue", ebpf_probe_kqueue);
+	ebpf_register(vm, EBPF_FUNC_kevent_install, "kevent_install", ebpf_probe_kevent_install);
+	ebpf_register(vm, EBPF_FUNC_kevent_poll, "kevent_poll", ebpf_probe_kevent_poll);
+	ebpf_register(vm, EBPF_FUNC_kevent_block, "kevent_block", ebpf_probe_kevent_block);
 }
 
 static int
