@@ -614,6 +614,12 @@ make_canonical(char *base, const char * rela, size_t bufsize)
 	if (rela[0] == '/') {
 		memset(base, 0, bufsize);
 		base_idx = 0;
+
+		if (rela[1] == '\0') {
+			base[0] = '/';
+			base[1] = '\0';
+			return (0);
+		}
 	} else {
 		base_idx = strlen(base);
 	}
