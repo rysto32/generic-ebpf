@@ -58,5 +58,8 @@ enum ebpf_common_functions {
 	EBPF_FUNC_kevent_install,
 	EBPF_FUNC_kevent_poll,
 	EBPF_FUNC_kevent_block,
+	EBPF_FUNC_close,
+	EBPF_FUNC_get_syscall_retval,	/* 40 */
+	EBPF_FUNC_symlinkat,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };

@@ -904,6 +904,44 @@ ebpf_probe_kevent_block(struct ebpf_vm_state *s, int kq,
 	return (0);
 }
 
+int
+ebpf_probe_close(struct ebpf_vm_state *s, int fd)
+{
+	int error;
+	struct thread *td;
+
+	td = curthread;
+	error = kern_close(td, fd);
+	if (error != 0) {
+		td->td_errno = error;
+	}
+
+	return (error);
+}
+
+int
+ebpf_probe_get_syscall_retval(struct ebpf_vm_state *s)
+{
+
+	return (curthread->td_retval[0]);
+}
+
+int
+ebpf_probe_symlinkat(struct ebpf_vm_state *s, const char *target, int fd,
+    const char *source)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	error = kern_symlinkat(td, target, fd, source, UIO_SYSSPACE);
+	if (error != 0) {
+		td->td_errno = error;
+	}
+
+	return (error);
+}
+
 /*
  * Kernel module operations
  */

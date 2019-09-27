@@ -56,3 +56,6 @@ static EBPF_FUNC(int, kevent_install, int, const struct kevent *, int num);
 static EBPF_FUNC(int, kevent_poll, int, struct kevent *, int num);
 static EBPF_FUNC(int, kevent_block, int kq, const struct timespec *to,
     void *callback);
+static EBPF_FUNC(int, close, int);
+static EBPF_FUNC(int, get_syscall_retval, void);
+static EBPF_FUNC(int, symlinkat, const char *, int, const char *);

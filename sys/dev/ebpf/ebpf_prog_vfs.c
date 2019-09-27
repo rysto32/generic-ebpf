@@ -76,6 +76,9 @@ vfs_vm_attach_func(struct ebpf_vm *vm)
 	ebpf_register(vm, EBPF_FUNC_kevent_install, "kevent_install", ebpf_probe_kevent_install);
 	ebpf_register(vm, EBPF_FUNC_kevent_poll, "kevent_poll", ebpf_probe_kevent_poll);
 	ebpf_register(vm, EBPF_FUNC_kevent_block, "kevent_block", ebpf_probe_kevent_block);
+	ebpf_register(vm, EBPF_FUNC_close, "close", ebpf_probe_close);
+	ebpf_register(vm, EBPF_FUNC_get_syscall_retval, "get_syscall_retval", ebpf_probe_get_syscall_retval);
+	ebpf_register(vm, EBPF_FUNC_symlinkat, "symlinkat", ebpf_probe_symlinkat);
 }
 
 static int

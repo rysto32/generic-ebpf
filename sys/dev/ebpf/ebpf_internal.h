@@ -141,3 +141,6 @@ int ebpf_probe_kevent_install(struct ebpf_vm_state *, int, struct kevent *, int)
 int ebpf_probe_kevent_poll(struct ebpf_vm_state *, int, struct kevent *, int);
 int ebpf_probe_kevent_block(struct ebpf_vm_state *, int,
       const struct timespec *, void *);
+int ebpf_probe_close(struct ebpf_vm_state *, int);
+int ebpf_probe_get_syscall_retval(struct ebpf_vm_state *);
+int ebpf_probe_symlinkat(struct ebpf_vm_state *, const char *, int, const char *);
