@@ -571,9 +571,13 @@ path_strip_trailing_slashes(char * path, size_t *base_idx)
 {
 	size_t i;
 
+	/*
+	 * This deliberately does not remove a / at the start of path, because
+	 * "/" is a valid canonical path.
+	 */
 	i = *base_idx;
-	while (i > 0 && path[i - 1] == '/') {
-		path[i - 1] = '\0';
+	while (i > 0 && path[i] == '/') {
+		path[i] = '\0';
 		--i;
 	}
 
