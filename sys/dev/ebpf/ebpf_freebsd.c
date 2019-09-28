@@ -301,7 +301,10 @@ ebpf_probe_dup(struct ebpf_vm_state *s, int fd)
 
 	td = curthread;
 	error = kern_dup(td, FDDUP_NORMAL, 0, fd, 0);
-	td->td_errno = error;
+	if (error != 0) {
+		td->td_errno = error;
+		return (-1);
+	}
 
 	/* Return the file descriptor. */
 	return (td->td_retval[0]);
@@ -315,7 +318,10 @@ ebpf_probe_openat(struct ebpf_vm_state *s, int fd, const char * path, int flags,
 
 	td = curthread;
 	error = kern_openat(td, fd, path, UIO_SYSSPACE, flags, mode);
-	td->td_errno = error;
+	if (error != 0) {
+		td->td_errno = error;
+		return (-1);
+	}
 
 	/* Return the file descriptor. */
 	return (td->td_retval[0]);
@@ -330,7 +336,9 @@ ebpf_probe_fstatat(struct ebpf_vm_state *s, int fd, const char *path, struct sta
 	td = curthread;
 
 	error = kern_statat(curthread, flag, fd, path, UIO_SYSSPACE, sb, NULL);
-	td->td_errno = error;
+	if (error != 0) {
+		td->td_errno = error;
+	}
 
 	return (error);
 }
@@ -344,7 +352,9 @@ ebpf_probe_fstat(struct ebpf_vm_state *s, int fd, struct stat *sb)
 	td = curthread;
 
 	error = kern_fstat(curthread, fd, sb);
-	td->td_errno = error;
+	if (error != 0) {
+		td->td_errno = error;
+	}
 
 	return (error);
 }
@@ -357,7 +367,9 @@ ebpf_probe_faccessat(struct ebpf_vm_state *s, int fd, const char *path, int mode
 
 	td = curthread;
 	error = kern_accessat(curthread, fd, path, UIO_SYSSPACE, flag, mode);
-	td->td_errno = error;
+	if (error != 0) {
+		td->td_errno = error;
+	}
 
 	return (error);
 }
@@ -404,13 +416,12 @@ ebpf_probe_pdfork(struct ebpf_vm_state *s, int *fd, int flags)
 
 	td = curthread;
 	error = fork1(td, &fr);
-	td->td_errno = error;
-
-	if (error == 0) {
-		return (pid);
-	} else {
+	if (error != 0) {
+		td->td_errno = error;
 		return (-1);
 	}
+
+	return (pid);
 }
 
 static int
@@ -421,7 +432,9 @@ ebpf_probe_do_pdwait(int fd, int* status, int options, struct rusage *ru)
 
 	td = curthread;
 	error = kern_pdwait4(td, fd, status, options, ru);
-	td->td_errno = error;
+	if (error != 0) {
+		td->td_errno = error;
+	}
 
 	return (error);
 }
@@ -469,7 +482,7 @@ ebpf_probe_pdwait4_defer(struct ebpf_vm_state *s, int fd, int options, void *arg
 	prog_fd = next;
 	if (prog_fd == NULL) {
 		curthread->td_errno = ENOENT;
-		return ENOENT;
+		return (ENOENT);
 	}
 
 	error = ebpf_fd_to_program(ebpf_curthread(), *prog_fd, &s->vm_fp, &prog);
@@ -532,7 +545,9 @@ ebpf_probe_readlinkat(struct ebpf_vm_state *s, int fd, const char *path,
 
 	td = ebpf_curthread();
 	error = kern_readlinkat(td, fd, path, UIO_SYSSPACE, buf, UIO_SYSSPACE, bufsize);
-	td->td_errno = error;
+	if (error != 0) {
+		td->td_errno = error;
+	}
 
 	return (error);
 }
@@ -553,7 +568,9 @@ ebpf_probe_exec_get_interp(struct ebpf_vm_state *s, int fd, char *buf,
 
 	td = ebpf_curthread();
 	error = exec_get_interp(td, fd, buf, bufsize, type);
-	td->td_errno = error;
+	if (error != 0) {
+		td->td_errno = error;
+	}
 
 	return (error);
 }
