@@ -629,7 +629,15 @@ make_canonical(char *base, const char * rela, size_t bufsize)
 	}
 
 	for (i = 0; i < bufsize; ++i) {
+next:
 		if (rela[i] == '\0') {
+			if (base_idx == 0) {
+				base[base_idx] = '/';
+				++base_idx;
+				if (base_idx == bufsize) {
+					return (ENAMETOOLONG);
+				}
+			}
 			base[base_idx] = '\0';
 			return (0);
 
@@ -653,13 +661,8 @@ make_canonical(char *base, const char * rela, size_t bufsize)
 				}
 
 				ch = rela[i];
-				if (ch == '\0') {
-					base[base_idx] = '\0';
-					return (0);
-				}
-
-				if (ch == '/') {
-					break;
+				if (ch == '\0' || ch == '/') {
+					goto next;
 				}
 				++i;
 
