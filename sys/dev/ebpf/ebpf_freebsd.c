@@ -653,7 +653,12 @@ make_canonical(char *base, const char * rela, size_t bufsize)
 				}
 
 				ch = rela[i];
-				if (ch == '/' || ch == '\0') {
+				if (ch == '\0') {
+					base[base_idx] = '\0';
+					return (0);
+				}
+
+				if (ch == '/') {
 					break;
 				}
 				++i;
