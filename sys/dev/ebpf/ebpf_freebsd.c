@@ -743,9 +743,8 @@ ebpf_probe_ktrnamei(struct ebpf_vm_state *s, char *path)
 	return (0);
 }
 
-int
-ebpf_probe_symlink_path(struct ebpf_vm_state *s, char *base,
-    const char * rela, size_t bufsize)
+static int
+do_symlink_path(char *base, const char * rela, size_t bufsize)
 {
 	size_t base_idx;
 	int error;
@@ -764,6 +763,14 @@ ebpf_probe_symlink_path(struct ebpf_vm_state *s, char *base,
 	}
 
 	return (make_canonical(base, rela, bufsize));
+}
+
+int
+ebpf_probe_symlink_path(struct ebpf_vm_state *s, char *base,
+    const char * rela, size_t bufsize)
+{
+
+	return (do_symlink_path(base, rela, bufsize));
 }
 
 size_t
@@ -949,6 +956,75 @@ ebpf_probe_symlinkat(struct ebpf_vm_state *s, const char *target, int fd,
 	}
 
 	return (error);
+}
+
+static int
+find_next_slash(const char * str, int start)
+{
+
+	while (str[start] != '\0') {
+		if (str[start] == '/') {
+			return start;
+		}
+
+		++start;
+	}
+
+	return (-1);
+}
+
+int
+ebpf_probe_resolve_one_symlink(struct ebpf_vm_state *s, void *pathBuf,
+    void *target, int fd, char *fileName, size_t buflen)
+{
+	struct thread *td;
+	int i, sep_pos, error;
+	char path_suffix[MAXPATHLEN];
+
+	if (buflen > MAXPATHLEN) {
+		return (ENOMEM);
+	}
+
+	td = curthread;
+
+	i = 0;
+	while(1) {
+		sep_pos = find_next_slash(fileName, i);
+		if (sep_pos >= 0) {
+			fileName[sep_pos] = '\0';
+		}
+
+		error = kern_readlinkat(td, fd, fileName, UIO_SYSSPACE, target,
+		    UIO_SYSSPACE, buflen);
+		if (error != 0 && error != EINVAL) {
+			td->td_errno = error;
+			return (error);
+		}
+
+		if (error == 0) {
+			if (sep_pos >= 0) {
+				strlcpy(path_suffix, &fileName[sep_pos + 1],
+				    MAXPATHLEN);
+			} else {
+				path_suffix[0] = '\0';
+			}
+			break;
+		}
+
+		if (sep_pos < 0) {
+			return (ENODEV);
+		}
+
+		fileName[sep_pos] = '/';
+		i = sep_pos + 1;
+	}
+
+	error = do_symlink_path(pathBuf, target, buflen);
+	if (error != 0 || path_suffix[0] == '\0') {
+		return (error);
+	}
+
+	return (make_canonical(pathBuf, path_suffix, buflen));
 }
 
 /*

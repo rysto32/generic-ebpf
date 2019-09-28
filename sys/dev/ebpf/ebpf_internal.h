@@ -144,3 +144,5 @@ int ebpf_probe_kevent_block(struct ebpf_vm_state *, int,
 int ebpf_probe_close(struct ebpf_vm_state *, int);
 int ebpf_probe_get_syscall_retval(struct ebpf_vm_state *);
 int ebpf_probe_symlinkat(struct ebpf_vm_state *, const char *, int, const char *);
+int ebpf_probe_resolve_one_symlink(struct ebpf_vm_state *, void *, void *,
+    int, char *, size_t);

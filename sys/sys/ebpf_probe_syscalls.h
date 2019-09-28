@@ -59,3 +59,4 @@ static EBPF_FUNC(int, kevent_block, int kq, const struct timespec *to,
 static EBPF_FUNC(int, close, int);
 static EBPF_FUNC(int, get_syscall_retval, void);
 static EBPF_FUNC(int, symlinkat, const char *, int, const char *);
+static EBPF_FUNC(int, resolve_one_symlink, void *, void *, int, char *, size_t);

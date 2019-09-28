@@ -61,5 +61,6 @@ enum ebpf_common_functions {
 	EBPF_FUNC_close,
 	EBPF_FUNC_get_syscall_retval,	/* 40 */
 	EBPF_FUNC_symlinkat,
+	EBPF_FUNC_resolve_one_symlink,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };
