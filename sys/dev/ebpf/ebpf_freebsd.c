@@ -1030,6 +1030,38 @@ ebpf_probe_resolve_one_symlink(struct ebpf_vm_state *s, void *pathBuf,
 	return (make_canonical(pathBuf, path_suffix, buflen));
 }
 
+
+int
+ebpf_probe_utimensat(struct ebpf_vm_state *s, int fd, const char * file,
+    struct timespec *times, int flag)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	error = kern_utimensat(td, fd, file, UIO_SYSSPACE, times, UIO_SYSSPACE, flag);
+	if (error != 0) {
+		td->td_errno = error;
+	}
+
+	return (error);
+}
+
+int
+ebpf_probe_fcntl(struct ebpf_vm_state *s, int fd, int cmd, int arg)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	error = kern_fcntl(td, fd, cmd, arg);
+	if (error != 0) {
+		td->td_errno = error;
+	}
+
+	return (error);
+}
+
 /*
  * Kernel module operations
  */
