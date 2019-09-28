@@ -17,6 +17,7 @@
  */
 
 #include <sys/ebpf.h>
+#include <sys/ebpf_function_idx.h>
 #include <dev/ebpf/ebpf_platform.h>
 #include <dev/ebpf/ebpf_internal.h>
 #include <dev/ebpf/ebpf_map.h>
@@ -1010,28 +1011,34 @@ find_next_slash(const char * str, int start)
 }
 
 int
-ebpf_probe_resolve_one_symlink(struct ebpf_vm_state *s, void *pathBuf,
-    void *target, int fd, char *fileName, size_t buflen)
+ebpf_probe_resolve_one_symlink(struct ebpf_vm_state *s,
+    struct ebpf_symlink_res_bufs *buffers, int fd, char *fileName,
+    int flags)
 {
 	struct thread *td;
 	int i, sep_pos, error;
-	char path_suffix[MAXPATHLEN];
-
-	if (buflen > MAXPATHLEN) {
-		return (ENOMEM);
-	}
+	char *target;
+	char *path_suffix;
 
 	td = curthread;
+	target = buffers->scratch1;
+	path_suffix = buffers->scratch2;
+
+	bzero(target, MAXPATHLEN);
 
 	i = 0;
-	while(1) {
+	while (1) {
 		sep_pos = find_next_slash(fileName, i);
 		if (sep_pos >= 0) {
 			fileName[sep_pos] = '\0';
+		} else {
+			if (flags & AT_SYMLINK_NOFOLLOW) {
+				return (ENODEV);
+			}
 		}
 
 		error = kern_readlinkat(td, fd, fileName, UIO_SYSSPACE, target,
-		    UIO_SYSSPACE, buflen);
+		    UIO_SYSSPACE, MAXPATHLEN);
 		if (error != 0 && error != EINVAL) {
 			td->td_errno = error;
 			return (error);
@@ -1055,12 +1062,12 @@ ebpf_probe_resolve_one_symlink(struct ebpf_vm_state *s, void *pathBuf,
 		i = sep_pos + 1;
 	}
 
-	error = do_symlink_path(pathBuf, target, buflen);
+	error = do_symlink_path(buffers->pathBuf, target, MAXPATHLEN);
 	if (error != 0 || path_suffix[0] == '\0') {
 		return (error);
 	}
 
-	return (make_canonical(pathBuf, path_suffix, buflen));
+	return (make_canonical(buffers->pathBuf, path_suffix, MAXPATHLEN));
 }
 
 

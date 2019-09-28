@@ -78,6 +78,8 @@ struct ebpf_vm_state
 	} scratch;
 };
 
+struct ebpf_symlink_res_bufs;
+
 unsigned int ebpf_lookup_registered_function(struct ebpf_vm *vm,
 					     const char *name);
 bool ebpf_validate(const struct ebpf_vm *vm, const struct ebpf_inst *insts,
@@ -144,8 +146,8 @@ int ebpf_probe_kevent_block(struct ebpf_vm_state *, int,
 int ebpf_probe_close(struct ebpf_vm_state *, int);
 int ebpf_probe_get_syscall_retval(struct ebpf_vm_state *);
 int ebpf_probe_symlinkat(struct ebpf_vm_state *, const char *, int, const char *);
-int ebpf_probe_resolve_one_symlink(struct ebpf_vm_state *, void *, void *,
-    int, char *, size_t);
+int ebpf_probe_resolve_one_symlink(struct ebpf_vm_state *,
+    struct ebpf_symlink_res_bufs *, int, char *, int);
 int ebpf_probe_utimensat(struct ebpf_vm_state *, int, const char *,
     struct timespec *, int);
 int ebpf_probe_fcntl(struct ebpf_vm_state *, int, int, int);

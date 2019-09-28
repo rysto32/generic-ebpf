@@ -18,6 +18,13 @@
 
 #pragma once
 
+struct ebpf_symlink_res_bufs
+{
+	char *pathBuf;
+	char *scratch1;
+	char *scratch2;
+};
+
 enum ebpf_common_functions {
 	EBPF_FUNC_unspec = 0,
 	EBPF_FUNC_ebpf_map_update_elem,
