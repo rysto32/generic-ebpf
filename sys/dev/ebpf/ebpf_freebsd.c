@@ -583,7 +583,7 @@ ebpf_probe_strncmp(struct ebpf_vm_state *s, const char *a, const char *b,
 	return (strncmp(a, b, len));
 }
 
-static int
+static void
 path_strip_trailing_slashes(char * path, size_t *base_idx)
 {
 	size_t i;
@@ -593,36 +593,38 @@ path_strip_trailing_slashes(char * path, size_t *base_idx)
 	 * "/" is a valid canonical path.
 	 */
 	i = *base_idx;
-	while (i > 0 && path[i] == '/') {
-		path[i] = '\0';
+	while (i > 1 && path[i - 1] == '/') {
+		path[i - 1] = '\0';
 		--i;
 	}
 
 	*base_idx = i;
-	return (0);
 }
 
 static int
 path_strip_last_comp(char * path, size_t *base_idx)
 {
-	char ch;
 	size_t i;
 
+	path_strip_trailing_slashes(path, base_idx);
+
 	i = *base_idx;
-	if (i == 0) {
+	if (i == 0 || (i == 1 && path[0] == '/')) {
 		// .. went outside of path; error
 		return (EINVAL);
 	}
 
-	do {
-
-		ch = path[i - 1];
-		path[i - 1] = '\0';
+	--i;
+	while (path[i] != '/') {
+		path[i] = '\0';
+		if (i == 0) {
+			break;
+		}
 		--i;
-	} while (ch != '/');
+	}
 
-	*base_idx = i;
-	return (path_strip_trailing_slashes(path, base_idx));
+	*base_idx = i + 1;
+	return (0);
 }
 
 static int
@@ -630,7 +632,7 @@ make_canonical(char *base, const char * rela, size_t bufsize)
 {
 	int error;
 	char ch;
-	size_t base_idx, i;
+	size_t base_idx, i, last_slash;
 
 	if (rela[0] == '/') {
 		memset(base, 0, bufsize);
@@ -643,8 +645,17 @@ make_canonical(char *base, const char * rela, size_t bufsize)
 		}
 	} else {
 		base_idx = strlen(base);
+		if (base[base_idx - 1] != '/') {
+			base[base_idx] = '/';
+			base_idx++;
+			if (base_idx == bufsize) {
+				return (ENAMETOOLONG);
+			}
+		}
+		last_slash = 1;
 	}
 
+	last_slash = 0;
 	for (i = 0; i < bufsize; ++i) {
 next:
 		if (rela[i] == '\0') {
@@ -664,19 +675,25 @@ next:
 				return error;
 			}
 
+			last_slash = 1;
+
 		} else if (rela[i] == '.' &&
 		    (((i + 1) == bufsize) || (rela[i+1] == '/' || rela[i+1] == '\0'))) {
 			/* Skip over "." path components */
 			continue;
 
-		} else if (rela[i] != '/') {
-			base[base_idx] = '/';
-			++base_idx;
-			do  {
+		} else if (rela[i] == '/') {
+			if (!last_slash) {
+				base[base_idx] = '/';
+				++base_idx;
 				if (base_idx == bufsize) {
 					return (ENAMETOOLONG);
 				}
-
+				last_slash = 1;
+			}
+		} else {
+			last_slash = 0;
+			do  {
 				ch = rela[i];
 				if (ch == '\0' || ch == '/') {
 					goto next;
@@ -685,6 +702,9 @@ next:
 
 				base[base_idx] = ch;
 				++base_idx;
+				if (base_idx == bufsize) {
+					return (ENAMETOOLONG);
+				}
 			} while (i < bufsize);
 		}
 
@@ -771,10 +791,6 @@ do_symlink_path(char *base, const char * rela, size_t bufsize)
 
 	if (rela[0] != '/') {
 		base_idx = strlen(base);
-		error = path_strip_trailing_slashes(base, &base_idx);
-		if (error != 0) {
-			return (error);
-		}
 
 		error = path_strip_last_comp(base, &base_idx);
 		if (error != 0) {
