@@ -151,3 +151,4 @@ int ebpf_probe_resolve_one_symlink(struct ebpf_vm_state *,
 int ebpf_probe_utimensat(struct ebpf_vm_state *, int, const char *,
     struct timespec *, int);
 int ebpf_probe_fcntl(struct ebpf_vm_state *, int, int, int);
+int ebpf_probe_unlinkat(struct ebpf_vm_state *, int, const char *, int);

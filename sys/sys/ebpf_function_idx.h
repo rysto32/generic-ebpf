@@ -71,5 +71,6 @@ enum ebpf_common_functions {
 	EBPF_FUNC_resolve_one_symlink,
 	EBPF_FUNC_utimensat,
 	EBPF_FUNC_fcntl,
+	EBPF_FUNC_unlinkat,		/* 45 */
 	__EBPF_COMMON_FUNCTIONS_MAX
 };

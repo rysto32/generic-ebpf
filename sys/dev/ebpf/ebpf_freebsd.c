@@ -1102,6 +1102,21 @@ ebpf_probe_fcntl(struct ebpf_vm_state *s, int fd, int cmd, int arg)
 	return (error);
 }
 
+int
+ebpf_probe_unlinkat(struct ebpf_vm_state *s, int fd, const char * path, int flags)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	error = kern_funlinkat(td, fd, path, FD_NONE, flags, UIO_SYSSPACE, 0);
+	if (error != 0) {
+		td->td_errno = error;
+	}
+
+	return (error);
+}
+
 /*
  * Kernel module operations
  */

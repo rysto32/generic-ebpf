@@ -63,3 +63,4 @@ static EBPF_FUNC(int, resolve_one_symlink, struct ebpf_symlink_res_bufs*,
     int, char *, int);
 static EBPF_FUNC(int, utimensat, int, const char *, const struct timespec *, int);
 static EBPF_FUNC(int, fcntl, int, int, int);
+static EBPF_FUNC(int, unlinkat, int, const char *, int);

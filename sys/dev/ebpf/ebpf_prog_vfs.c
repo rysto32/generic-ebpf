@@ -82,6 +82,7 @@ vfs_vm_attach_func(struct ebpf_vm *vm)
 	ebpf_register(vm, EBPF_FUNC_resolve_one_symlink, "resolve_one_symlink", ebpf_probe_resolve_one_symlink);
 	ebpf_register(vm, EBPF_FUNC_utimensat, "utimensat", ebpf_probe_utimensat);
 	ebpf_register(vm, EBPF_FUNC_fcntl, "fcntl", ebpf_probe_fcntl);
+	ebpf_register(vm, EBPF_FUNC_unlinkat, "unlinkat", ebpf_probe_unlinkat);
 }
 
 static int
