@@ -152,3 +152,8 @@ int ebpf_probe_utimensat(struct ebpf_vm_state *, int, const char *,
     struct timespec *, int);
 int ebpf_probe_fcntl(struct ebpf_vm_state *, int, int, int);
 int ebpf_probe_unlinkat(struct ebpf_vm_state *, int, const char *, int);
+int ebpf_probe_fchown(struct ebpf_vm_state *, int, uid_t, gid_t);
+int ebpf_probe_fchownat(struct ebpf_vm_state *, int, const char *, uid_t, gid_t, int);
+int ebpf_probe_fchmod(struct ebpf_vm_state *, int, mode_t);
+int ebpf_probe_fchmodat(struct ebpf_vm_state *, int, const char *, mode_t, int);
+int ebpf_probe_futimens(struct ebpf_vm_state *, int, struct timespec *);

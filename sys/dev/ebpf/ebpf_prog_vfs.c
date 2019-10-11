@@ -83,6 +83,11 @@ vfs_vm_attach_func(struct ebpf_vm *vm)
 	ebpf_register(vm, EBPF_FUNC_utimensat, "utimensat", ebpf_probe_utimensat);
 	ebpf_register(vm, EBPF_FUNC_fcntl, "fcntl", ebpf_probe_fcntl);
 	ebpf_register(vm, EBPF_FUNC_unlinkat, "unlinkat", ebpf_probe_unlinkat);
+	ebpf_register(vm, EBPF_FUNC_fchown, "fchown", ebpf_probe_fchown);
+	ebpf_register(vm, EBPF_FUNC_fchownat, "fchownat", ebpf_probe_fchownat);
+	ebpf_register(vm, EBPF_FUNC_fchmod, "fchmod", ebpf_probe_fchmod);
+	ebpf_register(vm, EBPF_FUNC_fchmodat, "fchmodat", ebpf_probe_fchmodat);
+	ebpf_register(vm, EBPF_FUNC_futimens, "futimens", ebpf_probe_futimens);
 }
 
 static int

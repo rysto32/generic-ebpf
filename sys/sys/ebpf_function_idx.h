@@ -72,5 +72,10 @@ enum ebpf_common_functions {
 	EBPF_FUNC_utimensat,
 	EBPF_FUNC_fcntl,
 	EBPF_FUNC_unlinkat,		/* 45 */
+	EBPF_FUNC_fchown,
+	EBPF_FUNC_fchownat,
+	EBPF_FUNC_fchmod,
+	EBPF_FUNC_fchmodat,
+	EBPF_FUNC_futimens,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };

@@ -1109,7 +1109,84 @@ ebpf_probe_unlinkat(struct ebpf_vm_state *s, int fd, const char * path, int flag
 	int error;
 
 	td = curthread;
-	error = kern_funlinkat(td, fd, path, FD_NONE, flags, UIO_SYSSPACE, 0);
+	error = kern_funlinkat(td, fd, path, FD_NONE, UIO_SYSSPACE, flags, 0);
+	if (error != 0) {
+		td->td_errno = error;
+	}
+
+	return (error);
+}
+
+int
+ebpf_probe_fchown(struct ebpf_vm_state *s, int fd, uid_t uid, gid_t gid)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	error = kern_fchown(td, fd, uid, gid);
+	if (error != 0) {
+		td->td_errno = error;
+	}
+
+	return (error);
+}
+
+int
+ebpf_probe_fchownat(struct ebpf_vm_state *s, int fd, const char * file,
+    uid_t uid, gid_t gid, int flag)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	error = kern_fchownat(td, fd, file, UIO_SYSSPACE, uid, gid, flag);
+	if (error != 0) {
+		td->td_errno = error;
+	}
+
+	return (error);
+}
+
+int
+ebpf_probe_fchmod(struct ebpf_vm_state *s, int fd, mode_t mode)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	error = kern_fchmod(td, fd, mode);
+	if (error != 0) {
+		td->td_errno = error;
+	}
+
+	return (error);
+}
+
+int
+ebpf_probe_fchmodat(struct ebpf_vm_state *s, int fd, const char * file,
+    mode_t mode, int flag)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	error = kern_fchmodat(td, fd, file, UIO_SYSSPACE, mode, flag);
+	if (error != 0) {
+		td->td_errno = error;
+	}
+
+	return (error);
+}
+
+int
+ebpf_probe_futimens(struct ebpf_vm_state *s, int fd, struct timespec *times)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	error = kern_futimens(td, fd, times, UIO_SYSSPACE);
 	if (error != 0) {
 		td->td_errno = error;
 	}
