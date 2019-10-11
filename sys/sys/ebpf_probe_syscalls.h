@@ -69,3 +69,4 @@ static EBPF_FUNC(int, fchownat, int, const char *, uid_t, gid_t, int);
 static EBPF_FUNC(int, fchmod, int, mode_t);
 static EBPF_FUNC(int, fchmodat, int, const char *, mode_t, int);
 static EBPF_FUNC(int, futimens, int, const struct timespec *);
+static EBPF_FUNC(int, linkat, int, const char *, int, const char *, int);

@@ -1194,6 +1194,22 @@ ebpf_probe_futimens(struct ebpf_vm_state *s, int fd, struct timespec *times)
 	return (error);
 }
 
+int
+ebpf_probe_linkat(struct ebpf_vm_state *s, int fromfd, const char *from,
+    int tofd, const char *to, int flag)
+{
+	struct thread *td;
+	int error;
+
+	td = curthread;
+	error = kern_linkat(td, fromfd, tofd, from, to, UIO_SYSSPACE, flag);
+	if (error != 0) {
+		td->td_errno = error;
+	}
+
+	return (error);
+}
+
 /*
  * Kernel module operations
  */

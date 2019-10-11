@@ -77,5 +77,6 @@ enum ebpf_common_functions {
 	EBPF_FUNC_fchmod,
 	EBPF_FUNC_fchmodat,
 	EBPF_FUNC_futimens,
+	EBPF_FUNC_linkat,
 	__EBPF_COMMON_FUNCTIONS_MAX
 };

@@ -157,3 +157,4 @@ int ebpf_probe_fchownat(struct ebpf_vm_state *, int, const char *, uid_t, gid_t,
 int ebpf_probe_fchmod(struct ebpf_vm_state *, int, mode_t);
 int ebpf_probe_fchmodat(struct ebpf_vm_state *, int, const char *, mode_t, int);
 int ebpf_probe_futimens(struct ebpf_vm_state *, int, struct timespec *);
+int ebpf_probe_linkat(struct ebpf_vm_state *, int, const char *, int, const char *, int);
