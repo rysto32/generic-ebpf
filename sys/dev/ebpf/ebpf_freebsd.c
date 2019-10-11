@@ -644,6 +644,7 @@ make_canonical(char *base, const char * rela, size_t bufsize)
 			base[1] = '\0';
 			return (0);
 		}
+		last_slash = 0;
 	} else {
 		base_idx = strlen(base);
 		if (base[base_idx - 1] != '/') {
@@ -656,7 +657,6 @@ make_canonical(char *base, const char * rela, size_t bufsize)
 		last_slash = 1;
 	}
 
-	last_slash = 0;
 	for (i = 0; i < bufsize; ++i) {
 next:
 		if (rela[i] == '\0') {
