@@ -207,7 +207,7 @@ ebpf_jenkins_hash(const void *buf, size_t len, uint32_t hash)
 int
 ebpf_init(void)
 {
-	ebpf_epoch = epoch_alloc(0);
+	ebpf_epoch = epoch_alloc("ebpf", 0);
 	ebpf_module_register(&ebpf_mod_callbacks);
 	return 0;
 }
