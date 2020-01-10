@@ -78,16 +78,6 @@ ebpf_fopen(ebpf_thread *td, ebpf_file **fp, int *fd, struct ebpf_obj *data)
 	}
 
 	/*
-	 * File operation definition for ebpf object file.
-	 * It simply check reference count on file close
-	 * and execute destractor of the ebpf object if
-	 * the reference count was 0. It doesn't allow to
-	 * perform any file operations except close(2)
-	 */
-	ebpf_objf_ops.fo_close = ebpf_objfile_close;
-	ebpf_objf_ops.fo_flags = DFLAG_PASSABLE;
-
-	/*
 	 * finit reserves two reference count for us, so release one
 	 * since we don't need it.
 	 */
@@ -188,6 +178,16 @@ ebpf_dev_init(void)
 {
 
 	memcpy(&ebpf_objf_ops, &badfileops, sizeof(struct fileops));
+
+	/*
+	 * File operation definition for ebpf object file.
+	 * It simply check reference count on file close
+	 * and execute destractor of the ebpf object if
+	 * the reference count was 0. It doesn't allow to
+	 * perform any file operations except close(2)
+	 */
+	ebpf_objf_ops.fo_close = ebpf_objfile_close;
+	ebpf_objf_ops.fo_flags = DFLAG_PASSABLE;
 
 	ebpf_dev = make_dev_credf(MAKEDEV_ETERNAL_KLD, &ebpf_cdevsw, 0, NULL,
 				  UID_ROOT, GID_WHEEL, 0600, "ebpf");
