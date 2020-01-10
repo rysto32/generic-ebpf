@@ -25,11 +25,13 @@
 #define SECTION(name) __attribute__((section(name)))
 
 struct ebpf_map_def {
-	char type[EBPF_NAME_MAX];
+	uint32_t type;
 	uint32_t key_size;
 	uint32_t value_size;
 	uint32_t max_entries;
 	uint32_t flags;
+	uint32_t inner_map_idx;
+	uint32_t numa_node;
 };
 
 #define EBPF_DEFINE_MAP(_name, _type, _key_size, _value_size, _max_entries,    \
